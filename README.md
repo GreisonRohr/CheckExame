@@ -127,3 +127,15 @@ data/catalogo_exames.csv
 exemplos/              Requisições de exemplo
 tests/
 ```
+
+## Prévia no navegador (`preview/`)
+
+`preview/index.html` é uma versão de página única do sistema, para testar sem
+instalar nada: roda inteira no navegador e, publicada no claude.ai, faz a leitura
+com Claude usando a conta de quem abre a página. Histórico e correções ficam no
+navegador e a O.S. é simulada. É gerada a partir de `preview/template.html`,
+do catálogo e do exemplo:
+
+```bash
+python preview/build.py
+```

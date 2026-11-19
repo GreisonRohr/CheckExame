@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CheckExame — prévia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: clínico, calmo, de balcão de recepção — preciso e sem enfeite.
+IDEA: a própria requisição médica ao lado da ficha de cadastro do laboratório.
+PICTURE: o documento lido, grande, ao lado do formulário que ele preenche.
+COLOUR and TYPE: branco, tinta azul-marinho, azul de carimbo como faixa; âmbar só para dúvida, vermelho para erro. IBM Plex.
+LAYOUT: faixa de título fina; área de trabalho em duas colunas que empilham no celular.
+*/
+:root{color-scheme:light dark;
+--bg:light-dark(#f3f5f8,#0e131b);--card:light-dark(#fff,#161d28);--ink:light-dark(#122033,#e6ebf2);--muted:light-dark(#5c6b7e,#93a1b3);
+--line:light-dark(#d8dee6,#2a3444);--azul:light-dark(#1f4f8f,#6ea3e6);--azul-bg:light-dark(#e7eef8,#1b2a40);--faixa:light-dark(#1f4f8f,#14243a);
+--ok:light-dark(#1d7a46,#5fcf8f);--ok-bg:light-dark(#e2f4ea,#16301f);--warn:light-dark(#9a6200,#f0b54a);--warn-bg:light-dark(#fff4dc,#33280f);
+--err:light-dark(#b42318,#ff8a80);--err-bg:light-dark(#fde7e5,#3a1714)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--faixa);color:#fff;padding:14px max(4vw,16px);display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center}
+header h1{font:600 22px/1.1 "IBM Plex Sans Condensed",sans-serif;margin:0;letter-spacing:.01em}
+header nav{display:flex;gap:4px}
+header nav button{background:transparent;color:#fff;border:0;border-radius:6px;padding:8px 14px;font:inherit;cursor:pointer;min-height:40px}
+header nav button[aria-current=true],header nav button:hover{background:rgba(255,255,255,.16)}
+#stats{margin-left:auto;font-size:13px;opacity:.85}
+main{padding:20px max(4vw,16px) 40px;max-width:1440px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+h2{font-size:18px;margin:0 0 4px}
+.muted{color:var(--muted)}.small{font-size:13px}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);font-size:16px;min-height:40px}
+textarea{resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--azul);outline-offset:1px}
+button{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:9px 16px;cursor:pointer;min-height:44px}
+button:hover{background:var(--azul-bg)}
+button.pri{background:var(--azul);border-color:var(--azul);color:light-dark(#fff,#0e131b);font-weight:600}
+button.pri:hover{filter:brightness(1.08)}
+button:disabled{opacity:.5;cursor:default}
+label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
+.inc{background:var(--warn-bg)!important;border-color:var(--warn)!important}
+
+/* importação */
+.importar{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:860px){.importar{grid-template-columns:1fr}}
+.modo{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.modo label{flex:1 1 220px;flex-direction:row;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;color:var(--ink);font-size:14px}
+.modo label:has(input:checked){border-color:var(--azul);background:var(--azul-bg)}
+.modo input{width:auto;min-height:0;margin-top:3px}
+.modo b{display:block}
+#drop{border:2px dashed var(--line);border-radius:10px;padding:34px 16px;text-align:center;position:relative;cursor:pointer;transition:background .15s}
+#drop.on{border-color:var(--azul);background:var(--azul-bg)}
+#drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+#drop p{margin:2px 0}
+#nomeArq{font-weight:600;color:var(--azul)}
+details{margin:12px 0}
+summary{cursor:pointer;color:var(--azul)}
+.linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.passos{margin:0;padding-left:20px}.passos li{margin:6px 0}
+.aviso{padding:10px 12px;border-radius:6px;margin:8px 0;background:var(--warn-bg);border-left:3px solid var(--warn);font-size:14px}
+.aviso.err{background:var(--err-bg);border-color:var(--err)}.aviso.ok{background:var(--ok-bg);border-color:var(--ok)}
+
+/* revisão */
+.rev{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
+@media(max-width:1000px){.rev{grid-template-columns:1fr}}
+.doc{position:sticky;top:12px}
+@media(max-width:1000px){.doc{position:static}}
+.doc-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+#prev{max-height:calc(100vh - 120px);overflow:auto;background:light-dark(#e9edf2,#0b1017);border-radius:6px}
+@media(max-width:1000px){#prev{max-height:60vh}}
+#prev img{display:block;width:100%;cursor:zoom-in}#prev img.z{width:220%;cursor:zoom-out}
+#prev pre{margin:0;padding:14px;white-space:pre-wrap;font:13px/1.5 ui-monospace,Menlo,monospace;background:var(--card)}
+fieldset{border:1px solid var(--line);border-radius:8px;margin:0 0 14px;padding:8px 14px 14px}
+legend{font-weight:600;padding:0 6px}
+.g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.s2{grid-column:span 2}.s4{grid-column:1/-1}
+@media(max-width:600px){.g{grid-template-columns:repeat(2,minmax(0,1fr))}.s2{grid-column:1/-1}}
+.chk{flex-direction:row;align-items:center;gap:8px;color:var(--ink);padding-top:20px}.chk input{width:auto;min-height:0}
+.ex{display:grid;grid-template-columns:minmax(0,1.3fr) 100px minmax(0,1.4fr) 128px 44px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.ex-h{font-size:12px;color:var(--muted);padding:4px 0}
+@media(max-width:600px){.ex{grid-template-columns:minmax(0,1fr) 96px 44px}.ex .nm{grid-column:1/-1;order:5}.ex .bd{order:6;grid-column:1/-1}.ex-h{display:none}}
+.ex small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.sug{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.sug button{min-height:30px;padding:2px 8px;font-size:12px}
+.rm{border:0;color:var(--err);font-size:22px;padding:0;background:none}
+.bdg{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--azul-bg);color:var(--azul)}
+.b-ok,.b-os{background:var(--ok-bg);color:var(--ok)}.b-revisar,.b-lida,.b-revisada{background:var(--warn-bg);color:var(--warn)}.b-nao,.b-erro{background:var(--err-bg);color:var(--err)}
+.acoes{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+pre.json{max-height:320px;overflow:auto;background:light-dark(#f4f6f9,#0b1017);padding:12px;border-radius:6px;font-size:12px}
+
+/* histórico */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:500;padding:6px;border-bottom:1px solid var(--line)}
+td{padding:8px 6px;border-bottom:1px solid var(--line);font-size:14px}
+td.n{text-align:right;white-space:nowrap}
+#hist tbody tr{cursor:pointer}#hist tbody tr:hover{background:var(--azul-bg)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--azul);border-radius:50%;animation:g 0.8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes g{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}#drop{transition:none}}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;color:var(--muted)}.stack td:empty{display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header>
+  <h1>CheckExame</h1>
+  <nav>
+    <button data-v="importar" aria-current="true">Nova leitura</button>
+    <button data-v="historico">Histórico</button>
+  </nav>
+  <div id="stats"></div>
+</header>
+
+<main>
+<section id="v-importar">
+  <div class="importar">
+    <form id="fImp" class="card">
+      <h2>Importar requisição</h2>
+      <p class="muted small" style="margin:0">Prévia de teste: os dados ficam só neste navegador e a O.S. é simulada.</p>
+      <div class="modo">
+        <label><input type="radio" name="modo" value="claude" checked><span><b>Leitura com Claude</b><span class="muted small">Foto, digitalização ou PDF, inclusive manuscrito.</span></span></label>
+        <label><input type="radio" name="modo" value="texto"><span><b>Leitura por regras</b><span class="muted small">Texto colado ou PDF digital. Sem IA.</span></span></label>
+      </div>
+      <div id="avisoClaude"></div>
+      <div id="drop">
+        <p><b>Arraste a requisição aqui</b> ou toque para escolher</p>
+        <p class="muted small">JPG, PNG, WEBP ou PDF</p>
+        <input type="file" id="arq" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain">
+        <p id="nomeArq"></p>
+      </div>
+      <details id="detTexto">
+        <summary>Ou colar o texto da requisição</summary>
+        <textarea id="txt" rows="9" style="margin-top:8px"></textarea>
+        <button type="button" id="bEx" style="margin-top:8px">Usar texto de exemplo</button>
+      </details>
+      <div class="linha">
+        <button class="pri" id="bLer" type="submit">Ler requisição</button>
+        <span id="lendo" class="muted small"></span>
+        <button type="button" id="bStop" hidden>Parar</button>
+      </div>
+      <div id="impMsg"></div>
+    </form>
+    <div class="card">
+      <h2>Como testar</h2>
+      <ol class="passos">
+        <li>Fotografe ou digitalize uma requisição e envie aqui. Prefira pedidos fictícios ou com dados pessoais cobertos.</li>
+        <li>Na revisão, confira os campos ao lado do documento. Amarelo indica leitura com dúvida.</li>
+        <li>Corrija o código dos exames que vierem como <span class="bdg b-revisar">revisar</span> ou <span class="bdg b-nao">não encontrado</span>. A correção é lembrada nas próximas leituras.</li>
+        <li>Clique em <b>Gerar O.S.</b> para ver o cadastro que seria enviado ao HIS.</li>
+      </ol>
+      <p class="muted small">O catálogo de exames é um exemplo com 79 exames e códigos fictícios. A leitura com Claude usa a sua conta do claude.ai.</p>
+    </div>
+  </div>
+</section>
+
+<section id="v-revisao" hidden>
+  <div class="rev">
+    <div class="card doc">
+      <div class="doc-top"><b id="rTit"></b><span id="rSt" class="bdg"></span></div>
+      <div id="prev"></div>
+    </div>
+    <form id="fRev" class="card" onsubmit="return false">
+      <div id="rAlert"></div>
+      <fieldset><legend>Paciente</legend><div class="g">
+        <label class="s2">Nome <input data-c="paciente.nome"></label>
+        <label>Nascimento <input data-c="paciente.data_nascimento" placeholder="DD/MM/AAAA"></label>
+        <label>Sexo <select data-c="paciente.sexo"><option value=""></option><option>M</option><option>F</option></select></label>
+        <label>CPF <input data-c="paciente.cpf" inputmode="numeric"></label>
+        <label>CNS <input data-c="paciente.cns" inputmode="numeric"></label>
+        <label>Telefone <input data-c="paciente.telefone"></label>
+        <label>Nome da mãe <input data-c="paciente.nome_mae"></label>
+      </div></fieldset>
+      <fieldset><legend>Convênio</legend><div class="g">
+        <label>Convênio <input data-c="convenio.nome"></label>
+        <label>Plano <input data-c="convenio.plano"></label>
+        <label>Carteirinha <input data-c="convenio.carteirinha"></label>
+        <label>Validade <input data-c="convenio.validade_carteirinha"></label>
+        <label>Nº da guia <input data-c="convenio.numero_guia"></label>
+      </div></fieldset>
+      <fieldset><legend>Solicitante</legend><div class="g">
+        <label class="s2">Médico <input data-c="medico.nome"></label>
+        <label>Conselho <input data-c="medico.conselho" placeholder="CRM"></label>
+        <label>Número <input data-c="medico.numero_conselho"></label>
+        <label>UF <input data-c="medico.uf_conselho" maxlength="2"></label>
+        <label>Data do pedido <input data-c="data_solicitacao" placeholder="DD/MM/AAAA"></label>
+        <label>CID <input data-c="cid"></label>
+        <label class="chk"><input type="checkbox" data-c="urgente"> Urgente</label>
+        <label class="s4">Indicação clínica <input data-c="indicacao_clinica"></label>
+      </div></fieldset>
+      <fieldset><legend>Exames</legend>
+        <div class="ex ex-h"><span>Na requisição</span><span>Código</span><span class="nm">Exame no catálogo</span><span></span><span></span></div>
+        <div id="exs"></div>
+        <button type="button" id="bAdd" style="margin-top:10px">Adicionar exame</button>
+        <datalist id="dl"></datalist>
+      </fieldset>
+      <fieldset><legend>Observações</legend><textarea data-c="observacoes" rows="2"></textarea></fieldset>
+      <div class="acoes">
+        <button type="button" id="bSalvar">Salvar revisão</button>
+        <button type="button" class="pri" id="bOS">Gerar O.S.</button>
+      </div>
+      <div id="rMsg"></div>
+    </form>
+  </div>
+</section>
+
+<section id="v-historico" hidden>
+  <div class="card">
+    <div class="linha" style="justify-content:space-between;margin:0 0 10px"><h2>Leituras</h2><button type="button" id="bLimpar">Apagar histórico</button></div>
+    <div id="confLimpar"></div>
+    <table id="hist" class="stack">
+      <thead><tr><th>#</th><th>Data</th><th>Arquivo</th><th>Leitura</th><th>Paciente</th><th>Exames</th><th>Tempo</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+{
+const CAT_RAW = __CATALOGO__;
+const EXEMPLO = __EXEMPLO__;
+
+const $ = (s, e = document) => e.querySelector(s);
+const $$ = (s, e = document) => [...e.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = t => (t || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9+/]+/g, " ").replace(/\s+/g, " ").trim();
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem("checkexame." + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("checkexame." + k, JSON.stringify(v)); } catch {} }
+};
+
+/* ---------------- catálogo e mapeamento ---------------- */
+const CAT = CAT_RAW.map(([codigo, nome, sin, material, setor]) => ({ codigo, nome, sin: sin.split("|").filter(Boolean), material, setor }));
+const POR_COD = Object.fromEntries(CAT.map(i => [i.codigo, i]));
+const EXATOS = new Map();
+for (const i of CAT) for (const t of [i.nome, i.codigo, ...i.sin]) { const n = norm(t); if (n && !EXATOS.has(n)) EXATOS.set(n, i.codigo); }
+const FUZZY = [...EXATOS.keys()].filter(t => t.length >= 4);
+
+function lev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+const ratio = (a, b) => 100 * (1 - lev(a, b) / Math.max(a.length, b.length, 1));
+function similar(a, b) {
+  const sa = a.split(" ").sort().join(" "), sb = b.split(" ").sort().join(" ");
+  let s = Math.max(ratio(a, b), ratio(sa, sb));
+  const [cur, lon] = a.length <= b.length ? [a, b] : [b, a];
+  if (cur.length >= 4 && lon.includes(cur)) s = Math.max(s, 90 * Math.min(1, 0.6 + cur.length / lon.length / 2));
+  return Math.round(s * 10) / 10;
+}
+function sugerir(texto, lim = 3) {
+  const n = norm(texto); if (!n) return [];
+  const best = {};
+  for (const t of FUZZY) { const c = EXATOS.get(t), s = similar(n, t); if (!best[c] || s > best[c]) best[c] = s; }
+  return Object.entries(best).sort((a, b) => b[1] - a[1]).slice(0, lim).map(([codigo, score]) => ({ codigo, nome: POR_COD[codigo].nome, score }));
+}
+function mapear(ex) {
+  const aprend = store.get("sinonimos", {});
+  const cands = [ex.texto_original, ex.nome_interpretado].filter(Boolean);
+  const aplicar = (cod, score, st, sug = []) => Object.assign(ex, { codigo_lis: cod, nome_lis: POR_COD[cod].nome, score, status_mapeamento: st, sugestoes: sug });
+  for (const t of cands) { const c = aprend[norm(t)]; if (c && POR_COD[c]) return aplicar(c, 100, "ok"); }
+  for (const t of cands) { const c = EXATOS.get(norm(t)); if (c) return aplicar(c, 100, "ok"); }
+  const best = {};
+  for (const t of cands) for (const s of sugerir(t)) if (!best[s.codigo] || s.score > best[s.codigo].score) best[s.codigo] = s;
+  const sug = Object.values(best).sort((a, b) => b.score - a.score).slice(0, 3);
+  if (sug[0]?.score >= 90) return aplicar(sug[0].codigo, sug[0].score, "ok", sug);
+  if (sug[0]?.score >= 70) return aplicar(sug[0].codigo, sug[0].score, "revisar", sug);
+  return Object.assign(ex, { codigo_lis: "", nome_lis: "", score: sug[0]?.score || 0, status_mapeamento: "nao", sugestoes: sug });
+}
+
+/* ---------------- modelo vazio ---------------- */
+const vazio = () => ({
+  paciente: { nome: "", data_nascimento: "", sexo: "", cpf: "", cns: "", telefone: "", nome_mae: "" },
+  convenio: { nome: "", plano: "", carteirinha: "", validade_carteirinha: "", numero_guia: "" },
+  medico: { nome: "", conselho: "", numero_conselho: "", uf_conselho: "" },
+  data_solicitacao: "", cid: "", indicacao_clinica: "", urgente: false, exames: [], observacoes: "",
+  legibilidade: "", campos_incertos: [], alertas: []
+});
+
+/* ---------------- leitura por regras ---------------- */
+const ROT = {
+  "paciente.nome": "(?:paciente|nome do paciente|nome)", "paciente.data_nascimento": "(?:data de nascimento|nascimento|dt\\.? nasc\\.?|d\\.?n\\.?)",
+  "paciente.nome_mae": "(?:nome da m[aã]e|m[aã]e)", "paciente.telefone": "(?:telefone|tel\\.?|celular|fone)",
+  "paciente.cns": "(?:cns|cart[aã]o sus|cart[aã]o nacional de sa[uú]de)", "convenio.nome": "(?:conv[eê]nio|operadora)",
+  "convenio.plano": "(?:plano)", "convenio.carteirinha": "(?:carteirinha|carteira|matr[ií]cula)", "convenio.numero_guia": "(?:guia|n[ºo°]?\\.? guia)",
+  "medico.nome": "(?:m[eé]dico(?: solicitante)?|solicitante)", "indicacao_clinica": "(?:indica[cç][aã]o cl[ií]nica|hip[oó]tese diagn[oó]stica)",
+  "data_solicitacao": "(?:data(?: da solicita[cç][aã]o| do pedido)?)"
+};
+const CAB = /^\s*(exames?(?: solicitados?| laboratoriais| a realizar)?|solicito|pe[cç]o)\s*(?::|$|\s)\s*(.*)$/i;
+const ITEM = /^\s*(?:[-•*·]|\d{1,2}[).\-]|\(\s*x?\s*\)|\[\s*x?\s*\])\s*/;
+const getP = (o, p) => p.split(".").reduce((x, k) => x?.[k], o);
+const setP = (o, p, v) => { const ks = p.split("."), l = ks.pop(); ks.reduce((x, k) => (x[k] ??= {}), o)[l] = v; };
+
+function lerTexto(texto) {
+  const r = vazio(), linhas = texto.split(/\r?\n/).map(l => l.trimEnd());
+  for (const [campo, rot] of Object.entries(ROT)) {
+    const re = new RegExp(`(?:^|\\s|\\|)${rot}\\s*[:\\-]\\s*(.+)`, "i");
+    for (const l of linhas) { const m = l.match(re); if (m) { if (!getP(r, campo)) setP(r, campo, m[1].split(/\s{2,}|\s\|\s|\t/)[0].replace(/^[ .;]+|[ .;]+$/g, "")); break; } }
+  }
+  if (!r.medico.nome) for (const l of linhas) { const m = l.match(/^\s*(?:dr|dra)\.?\s+([A-Za-zÀ-ú][A-Za-zÀ-ú .]{3,60})$/i); if (m) { r.medico.nome = m[1].trim(); break; } }
+  let m;
+  if ((m = texto.match(/\b(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\b/))) r.paciente.cpf = m[1].replace(/\D/g, "");
+  if ((m = texto.match(/\b(CRM|CRO|COREN|CRBM|CRN)\s*[-/:]?\s*([A-Z]{2})?\s*[-/:]?\s*(\d{3,7})\s*[-/]?\s*([A-Z]{2})?/i))) {
+    r.medico.conselho = m[1].toUpperCase(); r.medico.numero_conselho = m[3]; r.medico.uf_conselho = (m[2] || m[4] || "").toUpperCase();
+  }
+  if ((m = texto.match(/\bCID(?:-?10)?\s*[:\-]?\s*([A-TV-Z]\d{2}(?:\.\d)?)/i))) r.cid = m[1].toUpperCase();
+  if (/\b(urgente|urg[eê]ncia|emerg[eê]ncia)\b/i.test(texto)) r.urgente = true;
+  if (/\bsexo\s*:?\s*(m|masc)/i.test(texto)) r.paciente.sexo = "M"; else if (/\bsexo\s*:?\s*(f|fem)/i.test(texto)) r.paciente.sexo = "F";
+  for (const c of ["paciente.data_nascimento", "data_solicitacao"]) {
+    const v = getP(r, c), d = v && v.match(/\b(\d{2})[/.-](\d{2})[/.-](\d{2,4})\b/);
+    setP(r, c, d ? `${d[1]}/${d[2]}/${d[3].length === 4 ? d[3] : "20" + d[3]}` : "");
+  }
+  const trechos = []; let dentro = false;
+  for (const l of linhas) {
+    const c = l.match(CAB);
+    if (c) { dentro = true; if (c[2].trim()) trechos.push(c[2]); continue; }
+    if (!dentro) continue;
+    if (!l.trim()) { if (trechos.length) dentro = false; continue; }
+    if (/^\s*[A-Za-zÀ-ú ]{3,30}:\s*\S/.test(l) && !ITEM.test(l)) { dentro = false; continue; }
+    trechos.push(l);
+  }
+  if (!trechos.length) for (const l of linhas) if (l.trim() && EXATOS.has(norm(l.replace(ITEM, "")))) trechos.push(l);
+  for (const t of trechos) for (let p of t.replace(ITEM, "").split(/[,;+\n]/)) {
+    p = p.replace(ITEM, "").replace(/^[ .\t]+|[ .\t]+$/g, "");
+    if (!norm(p) || /^\d+$/.test(p)) continue;
+    let partes = [p];
+    if (!EXATOS.has(norm(p))) {
+      const pd = p.split(/\s*\/\s*|\s+e\s+/).map(x => x.replace(/^[ .]+|[ .]+$/g, "")).filter(Boolean);
+      if (pd.length > 1 && pd.every(x => EXATOS.has(norm(x)))) partes = pd;
+    }
+    for (const x of partes) r.exames.push({ texto_original: x, nome_interpretado: "", observacao: "" });
+  }
+  if (!r.exames.length) r.alertas.push("Nenhum exame identificado no texto.");
+  if (!r.paciente.nome) r.alertas.push("Nome do paciente não encontrado.");
+  r.legibilidade = "boa";
+  return r;
+}
+
+/* ---------------- leitura com Claude ---------------- */
+const PROMPT = `Você é um assistente de recepção de laboratório de análises clínicas no Brasil. Transcreva a requisição médica (pedido de exames) das imagens anexadas para o formulário de cadastro da ordem de serviço.
+
+Regras:
+- Transcreva apenas o que está no documento. Nunca invente dados. Campo ausente ou ilegível = "".
+- Datas no formato DD/MM/AAAA. CPF só com os 11 dígitos. Sexo: "M", "F" ou "".
+- Convênio: nome da operadora como escrito; "PARTICULAR" se o pedido indicar particular; "SUS" se for guia/receituário do SUS.
+- Médico: nome, conselho (CRM, CRO, COREN...), número e UF, geralmente no carimbo.
+- Exames: um item por exame solicitado. Separe "Hemograma, glicose, ureia e creatinina" em itens distintos. Em "texto_original" copie exatamente como está escrito (com abreviações); em "nome_interpretado" o nome completo usual em português (ex.: "TGO" -> "Transaminase oxalacética (AST)", "EAS" -> "Urina tipo I"). Perfis como "lipidograma" ficam como um item. "observacao": jejum, material etc.
+- "urgente": true só com indicação explícita (urgente, URG, prioridade).
+- "legibilidade": "boa", "media" ou "ruim".
+- "campos_incertos": caminhos dos campos lidos com dúvida, ex.: "paciente.nome", "exames[2]", "medico.numero_conselho".
+- "alertas": o que a recepção deve conferir: sem assinatura/carimbo, pedido antigo, paciente sem identificação, exame que não é de laboratório (imagem), trecho ilegível, documento que não é requisição etc.
+
+Responda apenas com um objeto JSON neste formato:
+{"paciente":{"nome":"","data_nascimento":"","sexo":"","cpf":"","cns":"","telefone":"","nome_mae":""},"convenio":{"nome":"","plano":"","carteirinha":"","validade_carteirinha":"","numero_guia":""},"medico":{"nome":"","conselho":"","numero_conselho":"","uf_conselho":""},"data_solicitacao":"","cid":"","indicacao_clinica":"","urgente":false,"exames":[{"texto_original":"","nome_interpretado":"","observacao":""}],"observacoes":"","legibilidade":"boa","campos_incertos":[],"alertas":[]}`;
+
+let sample = null, limites = null, sampleChecado = false;
+(async () => {
+  try { sample = await window.claude?.use("sample"); } catch { sample = null; }
+  if (sample) limites = await sample.limits().catch(() => null);
+  atualizarAvisoClaude();
+})();
+function atualizarAvisoClaude() {
+  const modo = $("input[name=modo]:checked").value, el = $("#avisoClaude");
+  if (modo !== "claude") { el.innerHTML = ""; return; }
+  if (!window.claude) el.innerHTML = `<div class="aviso">Abra esta página no claude.ai para usar a leitura com Claude.</div>`;
+  else if (sample === null && limites === null && sampleChecado) el.innerHTML = `<div class="aviso">A leitura com Claude não está disponível nesta visualização. Use a leitura por regras.</div>`;
+  else if (sample && !limites?.images) el.innerHTML = `<div class="aviso">Envio de imagens ao Claude indisponível nesta visualização.</div>`;
+  else el.innerHTML = "";
+}
+setTimeout(() => { sampleChecado = true; atualizarAvisoClaude(); }, 11000);
+
+function completar(d) {
+  const r = vazio();
+  for (const g of ["paciente", "convenio", "medico"]) for (const k in r[g]) r[g][k] = String(d?.[g]?.[k] ?? "");
+  for (const k of ["data_solicitacao", "cid", "indicacao_clinica", "observacoes", "legibilidade"]) r[k] = String(d?.[k] ?? "");
+  r.urgente = !!d?.urgente;
+  r.exames = (Array.isArray(d?.exames) ? d.exames : []).filter(e => e?.texto_original || e?.nome_interpretado)
+    .map(e => ({ texto_original: String(e.texto_original || e.nome_interpretado), nome_interpretado: String(e.nome_interpretado || ""), observacao: String(e.observacao || "") }));
+  r.campos_incertos = (d?.campos_incertos || []).map(String);
+  r.alertas = (d?.alertas || []).map(String);
+  return r;
+}
+
+/* ---------------- PDF ---------------- */
+async function pdfParaImagens(buf, max) {
+  if (!window.pdfjsLib) throw new Error("Leitor de PDF não carregou. Envie uma foto ou imagem da requisição.");
+  const doc = await pdfjsLib.getDocument({ data: buf }).promise, out = [], urls = [];
+  for (let i = 1; i <= Math.min(doc.numPages, max); i++) {
+    const pg = await doc.getPage(i), vp = pg.getViewport({ scale: 2 }), c = document.createElement("canvas");
+    c.width = vp.width; c.height = vp.height;
+    await pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+    const b = await new Promise(r => c.toBlob(r, "image/jpeg", 0.9)); out.push(b); urls.push(c.toDataURL("image/jpeg", 0.8));
+  }
+  return { blobs: out, urls };
+}
+async function pdfTexto(buf) {
+  if (!window.pdfjsLib) throw new Error("Leitor de PDF não carregou.");
+  const doc = await pdfjsLib.getDocument({ data: buf }).promise; let t = "";
+  for (let i = 1; i <= doc.numPages; i++) {
+    const c = await (await doc.getPage(i)).getTextContent(); let y = null;
+    for (const it of c.items) { if (y !== null && Math.abs(it.transform[5] - y) > 2) t += "\n"; else if (y !== null) t += " "; t += it.str; y = it.transform[5]; }
+    t += "\n";
+  }
+  return t;
+}
+const lerDataURL = f => new Promise((ok, err) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = err; r.readAsDataURL(f); });
+async function encolher(dataUrl) {
+  const img = new Image(); img.src = dataUrl; await img.decode();
+  const k = Math.min(1, 1400 / Math.max(img.width, img.height)), c = document.createElement("canvas");
+  c.width = img.width * k; c.height = img.height * k; c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.82);
+}
+
+/* ---------------- importação ---------------- */
+let ctl = null;
+const drop = $("#drop");
+["dragenter", "dragover"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("on"); }));
+["dragleave", "drop"].forEach(e => drop.addEventListener(e, () => drop.classList.remove("on")));
+drop.addEventListener("drop", ev => { ev.preventDefault(); $("#arq").files = ev.dataTransfer.files; $("#nomeArq").textContent = ev.dataTransfer.files[0]?.name || ""; });
+$("#arq").addEventListener("change", e => $("#nomeArq").textContent = e.target.files[0]?.name || "");
+$$("input[name=modo]").forEach(r => r.addEventListener("change", () => { atualizarAvisoClaude(); if (r.value === "texto" && r.checked) $("#detTexto").open = true; }));
+$("#bEx").addEventListener("click", () => { $("#txt").value = EXEMPLO; $("input[name=modo][value=texto]").checked = true; atualizarAvisoClaude(); });
+$("#bStop").addEventListener("click", () => ctl?.abort());
+
+const ERROS = {
+  not_granted: "Uso do Claude não autorizado nesta página.", sampling_disabled: "Claude indisponível para esta conta.",
+  rate_limited: "Limite de uso atingido. Tente novamente em alguns minutos.", image_rejected: "Imagem recusada: use JPG, PNG ou WEBP de até 20 MB.",
+  images_unavailable: "Envio de imagens indisponível nesta visualização.", refused: "O Claude recusou ler este documento.",
+  invalid_json: "A resposta veio fora do formato. Tente de novo.", session_expired: "Sessão expirada: entre de novo no claude.ai.",
+  empty_completion: "Resposta vazia. Tente de novo.", prompt_too_large: "Documento grande demais."
+};
+
+$("#fImp").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const modo = $("input[name=modo]:checked").value, f = $("#arq").files[0], texto = $("#txt").value.trim();
+  const msg = $("#impMsg"); msg.innerHTML = "";
+  if (!f && !texto) { msg.innerHTML = `<div class="aviso err">Envie um arquivo ou cole o texto da requisição.</div>`; return; }
+  const leit = { id: proxId(), criado: new Date().toISOString(), arquivo: f ? f.name : "texto colado", modo, status: "lida", previa: null, erro: "" };
+  const ini = performance.now();
+  $("#bLer").disabled = true; $("#lendo").innerHTML = `<span class="spin"></span>Lendo…`;
+  try {
+    let dados;
+    if (modo === "texto") {
+      let t = texto;
+      if (f) {
+        if (f.type === "application/pdf") t = await pdfTexto(await f.arrayBuffer());
+        else if (f.type.startsWith("text/")) t = await f.text();
+        else throw new Error("A leitura por regras só lê texto e PDF digital. Para fotos use a leitura com Claude.");
+        if (t.trim().length < 20) throw new Error("PDF sem texto (digitalizado). Use a leitura com Claude.");
+      }
+      leit.previa = { tipo: "texto", t };
+      dados = lerTexto(t);
+    } else {
+      if (!sample) throw new Error(window.claude ? "Leitura com Claude indisponível nesta visualização." : "Abra esta página no claude.ai para usar a leitura com Claude.");
+      if (!limites?.images) throw new Error("Envio de imagens ao Claude indisponível nesta visualização.");
+      let imgs, urls, extra = "";
+      if (f && f.type === "application/pdf") { const p = await pdfParaImagens(await f.arrayBuffer(), limites.images.maxCount || 3); imgs = p.blobs; urls = p.urls; extra = `\n\nAs imagens são as páginas de um PDF.`; }
+      else if (f && f.type.startsWith("image/")) { imgs = [f]; urls = [await encolher(await lerDataURL(f))]; }
+      else if (f) throw new Error("Formato não suportado. Envie JPG, PNG, WEBP ou PDF.");
+      if (imgs) leit.previa = { tipo: "img", urls };
+      else { leit.previa = { tipo: "texto", t: texto }; extra = `\n\nTexto da requisição:\n${texto.slice(0, 20000)}`; }
+      ctl = new AbortController(); $("#bStop").hidden = false;
+      const d = await sample.json(PROMPT + extra, { images: imgs, signal: ctl.signal, effort: "high" });
+      dados = completar(d);
+    }
+    dados.exames.forEach(mapear);
+    leit.dados = dados; leit.original = structuredClone(dados);
+  } catch (e) {
+    if (e?.code === "cancelled") { msg.innerHTML = `<div class="aviso">Leitura interrompida.</div>`; return; }
+    leit.status = "erro"; leit.erro = e?.code ? (ERROS[e.code] || "Falha na leitura. Tente de novo.") : (e?.message || String(e));
+    leit.dados = vazio(); leit.original = null;
+  } finally {
+    $("#bLer").disabled = false; $("#lendo").textContent = ""; $("#bStop").hidden = true; ctl = null;
+  }
+  leit.ms = Math.round(performance.now() - ini);
+  salvarLeitura(leit);
+  $("#fImp").reset(); $("#nomeArq").textContent = ""; atualizarAvisoClaude();
+  abrir(leit.id);
+});
+
+/* ---------------- armazenamento ---------------- */
+let LEITURAS = store.get("leituras", []);
+const proxId = () => (LEITURAS.reduce((m, l) => Math.max(m, l.id), 0) + 1);
+function salvarLeitura(l) {
+  const i = LEITURAS.findIndex(x => x.id === l.id);
+  if (i >= 0) LEITURAS[i] = l; else LEITURAS.unshift(l);
+  store.set("leituras", LEITURAS.slice(0, 40));
+  stats();
+}
+
+/* ---------------- navegação ---------------- */
+function mostrar(v) {
+  $$("main > section").forEach(s => s.hidden = s.id !== "v-" + v);
+  $$("header nav button").forEach(b => b.setAttribute("aria-current", b.dataset.v === v));
+  if (v === "historico") historico();
+  window.scrollTo(0, 0);
+}
+$$("header nav button").forEach(b => b.addEventListener("click", () => mostrar(b.dataset.v)));
+
+function stats() {
+  let ct = 0, ci = 0, et = 0, eo = 0;
+  for (const l of LEITURAS) {
+    if (!["revisada", "os"].includes(l.status) || !l.original) continue;
+    for (const g of ["paciente", "convenio", "medico"]) for (const [k, v] of Object.entries(l.dados[g])) if (v) { ct++; ci += +(l.original[g][k] === v); }
+    const co = l.original.exames.map(e => e.codigo_lis);
+    for (const e of l.dados.exames) { et++; eo += +co.includes(e.codigo_lis); }
+  }
+  const p = (a, b) => b ? Math.round(100 * a / b) + "%" : "—";
+  $("#stats").textContent = `${LEITURAS.length} leituras · ${LEITURAS.filter(l => l.status === "os").length} O.S. · acerto: campos ${p(ci, ct)}, exames ${p(eo, et)}`;
+}
+
+/* ---------------- revisão ---------------- */
+let atual = null;
+const ST = { lida: "lida", revisada: "revisada", os: "O.S. gerada", erro: "erro" };
+function abrir(id) {
+  atual = LEITURAS.find(l => l.id === id); if (!atual) return;
+  mostrar("revisao");
+  $("#rTit").textContent = `#${atual.id} · ${atual.arquivo} · ${atual.modo === "claude" ? "Claude" : "regras"} · ${(atual.ms / 1000).toFixed(1)} s`;
+  $("#rSt").textContent = atual.os ? `O.S. ${atual.os}` : ST[atual.status]; $("#rSt").className = "bdg b-" + atual.status;
+  const pv = atual.previa;
+  $("#prev").innerHTML = !pv ? `<p class="muted" style="padding:14px">Sem prévia do documento.</p>`
+    : pv.tipo === "img" ? pv.urls.map(u => `<img src="${u}" alt="Requisição">`).join("") : `<pre>${esc(pv.t)}</pre>`;
+  $$("#prev img").forEach(i => i.addEventListener("click", () => i.classList.toggle("z")));
+  const d = atual.dados, inc = new Set(d.campos_incertos || []);
+  $$("[data-c]").forEach(el => { const v = getP(d, el.dataset.c); if (el.type === "checkbox") el.checked = !!v; else el.value = v ?? ""; el.classList.toggle("inc", inc.has(el.dataset.c)); });
+  const a = [];
+  if (atual.erro) a.push(`<div class="aviso err">${esc(atual.erro)}</div>`);
+  if (d.legibilidade === "ruim") a.push(`<div class="aviso">Legibilidade ruim: confira tudo com atenção.</div>`);
+  (d.alertas || []).forEach(x => a.push(`<div class="aviso">${esc(x)}</div>`));
+  if (inc.size) a.push(`<div class="aviso">Campos lidos com dúvida estão em amarelo.</div>`);
+  $("#rAlert").innerHTML = a.join(""); $("#rMsg").innerHTML = "";
+  $("#exs").innerHTML = ""; d.exames.forEach((e, i) => $("#exs").appendChild(linha(e, inc.has(`exames[${i}]`))));
+  const trav = atual.status === "os";
+  $$("#fRev input,#fRev select,#fRev textarea,#fRev button").forEach(el => el.disabled = trav);
+  if (trav) mostrarOS();
+}
+const stTxt = e => ({ ok: "ok", revisar: `revisar · ${Math.round(e.score)}`, nao: "não encontrado", manual: "corrigido" })[e.status_mapeamento];
+const stCls = s => ({ ok: "b-ok", revisar: "b-revisar", nao: "b-nao", manual: "" })[s] ?? "";
+function linha(ex, incerto = false) {
+  const r = document.createElement("div"); r.className = "ex"; r._ex = structuredClone(ex);
+  const sug = ["ok", "manual"].includes(ex.status_mapeamento) ? "" : (ex.sugestoes || []).map(s => `<button type="button" data-cod="${esc(s.codigo)}">${esc(s.codigo)} · ${esc(s.nome)}</button>`).join("");
+  r.innerHTML = `<div><input class="tx ${incerto ? "inc" : ""}" value="${esc(ex.texto_original)}" aria-label="Texto na requisição">
+      ${ex.nome_interpretado && norm(ex.nome_interpretado) !== norm(ex.texto_original) ? `<small>lido como: ${esc(ex.nome_interpretado)}</small>` : ""}
+      ${ex.observacao ? `<small>obs.: ${esc(ex.observacao)}</small>` : ""}</div>
+    <input class="cd" list="dl" value="${esc(ex.codigo_lis)}" aria-label="Código">
+    <div class="nm">${esc(ex.nome_lis) || `<span class="muted">—</span>`}${sug ? `<div class="sug">${sug}</div>` : ""}</div>
+    <span class="bd"><span class="bdg ${stCls(ex.status_mapeamento)}">${stTxt(ex)}</span></span>
+    <button type="button" class="rm" aria-label="Remover exame">×</button>`;
+  const definir = cod => {
+    const it = CAT.find(c => c.codigo.toLowerCase() === cod.trim().toLowerCase());
+    Object.assign(r._ex, it ? { codigo_lis: it.codigo, nome_lis: it.nome, status_mapeamento: "manual", score: 100 } : { codigo_lis: cod.trim(), nome_lis: "", status_mapeamento: "nao", score: 0 });
+    r.replaceWith(linha(r._ex));
+  };
+  $(".cd", r).addEventListener("change", e => definir(e.target.value));
+  $$(".sug button", r).forEach(b => b.addEventListener("click", () => definir(b.dataset.cod)));
+  $(".rm", r).addEventListener("click", () => r.remove());
+  $(".tx", r).addEventListener("change", e => { r._ex.texto_original = e.target.value; r._ex.nome_interpretado = ""; r.replaceWith(linha(mapear(r._ex))); });
+  return r;
+}
+$("#bAdd").addEventListener("click", () => { const r = linha({ texto_original: "", codigo_lis: "", nome_lis: "", status_mapeamento: "nao", sugestoes: [] }); $("#exs").appendChild(r); $(".tx", r).focus(); });
+$("#dl").innerHTML = CAT.map(c => `<option value="${esc(c.codigo)}">${esc(c.nome)}</option>`).join("");
+
+function coletar() {
+  const d = structuredClone(atual.dados);
+  $$("[data-c]", $("#fRev")).forEach(el => { if (el.closest(".ex")) return; setP(d, el.dataset.c, el.type === "checkbox" ? el.checked : el.value.trim()); });
+  d.exames = $$("#exs .ex").map(r => r._ex).filter(e => e.texto_original || e.codigo_lis);
+  return d;
+}
+function salvarRev() {
+  const d = coletar(), apr = store.get("sinonimos", {});
+  for (const e of d.exames) if (e.status_mapeamento === "manual" && POR_COD[e.codigo_lis] && norm(e.texto_original)) apr[norm(e.texto_original)] = e.codigo_lis;
+  store.set("sinonimos", apr);
+  atual.dados = d; atual.status = "revisada"; atual.erro = ""; salvarLeitura(atual);
+}
+$("#bSalvar").addEventListener("click", () => { salvarRev(); abrir(atual.id); $("#rMsg").innerHTML = `<div class="aviso ok">Revisão salva.</div>`; });
+
+function pendencias(d) {
+  const p = [];
+  if (!d.paciente.nome) p.push("Nome do paciente é obrigatório.");
+  if (!d.paciente.data_nascimento) p.push("Data de nascimento é obrigatória.");
+  if (!d.exames.length) p.push("Nenhum exame na requisição.");
+  d.exames.forEach((e, i) => { if (!POR_COD[e.codigo_lis]) p.push(`Exame ${i + 1} (“${e.texto_original}”) sem código do catálogo.`); });
+  return p;
+}
+const payload = l => ({
+  origem: "checkexame", leitura_id: l.id, paciente: l.dados.paciente, convenio: l.dados.convenio, medico: l.dados.medico,
+  data_solicitacao: l.dados.data_solicitacao, cid: l.dados.cid, indicacao_clinica: l.dados.indicacao_clinica, urgente: l.dados.urgente,
+  observacoes: l.dados.observacoes, exames: l.dados.exames.map(e => ({ codigo: e.codigo_lis, nome: e.nome_lis, texto_requisicao: e.texto_original, observacao: e.observacao }))
+});
+$("#bOS").addEventListener("click", () => {
+  salvarRev();
+  const p = pendencias(atual.dados);
+  if (p.length) { abrir(atual.id); $("#rMsg").innerHTML = `<div class="aviso err"><b>Corrija antes de gerar a O.S.:</b><br>${p.map(esc).join("<br>")}</div>`; return; }
+  const n = new Date(), z = x => String(x).padStart(2, "0");
+  atual.os = `${String(n.getFullYear()).slice(2)}${z(n.getMonth() + 1)}${z(n.getDate())}${z(n.getHours())}${z(n.getMinutes())}${z(atual.id)}`;
+  atual.status = "os"; salvarLeitura(atual); abrir(atual.id);
+});
+function mostrarOS() {
+  const j = JSON.stringify(payload(atual), null, 2);
+  $("#rMsg").innerHTML = `<div class="aviso ok">O.S. <b>${esc(atual.os)}</b> gerada (simulação). Abaixo, o cadastro que seria enviado ao HIS.</div>
+    <pre class="json">${esc(j)}</pre><button type="button" id="bCopiar">Copiar JSON</button> <span id="cpMsg" class="muted small"></span>`;
+  $("#bCopiar").addEventListener("click", async () => { try { await navigator.clipboard.writeText(j); $("#cpMsg").textContent = "Copiado."; } catch { $("#cpMsg").textContent = "Não foi possível copiar."; } });
+}
+
+/* ---------------- histórico ---------------- */
+function historico() {
+  const tb = $("#hist tbody");
+  tb.innerHTML = LEITURAS.map(l => `<tr data-id="${l.id}"><td class="n">${l.id}</td><td>${esc(new Date(l.criado).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }))}</td>
+    <td>${esc(l.arquivo)}</td><td>${l.modo === "claude" ? "Claude" : "regras"}</td><td>${esc(l.dados?.paciente?.nome)}</td><td class="n">${l.dados?.exames?.length ?? 0}</td>
+    <td class="n">${(l.ms / 1000).toFixed(1)} s</td><td><span class="bdg b-${l.status}">${l.os ? "O.S. " + esc(l.os) : ST[l.status]}</span></td></tr>`).join("")
+    || `<tr><td colspan="8" class="muted">Nenhuma leitura ainda.</td></tr>`;
+  $$("tr[data-id]", tb).forEach(tr => tr.addEventListener("click", () => abrir(+tr.dataset.id)));
+}
+$("#bLimpar").addEventListener("click", () => {
+  $("#confLimpar").innerHTML = `<div class="aviso">Apagar todas as leituras e correções aprendidas deste navegador? <button type="button" id="bSim">Apagar</button> <button type="button" id="bNao">Cancelar</button></div>`;
+  $("#bSim").addEventListener("click", () => { LEITURAS = []; store.set("leituras", []); store.set("sinonimos", {}); $("#confLimpar").innerHTML = ""; historico(); stats(); });
+  $("#bNao").addEventListener("click", () => $("#confLimpar").innerHTML = "");
+});
+
+stats();
+}
+</script>
+</body>
+</html>
