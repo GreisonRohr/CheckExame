@@ -1,0 +1,8 @@
+codigo;nome;conselho;numero;uf;especialidade
+M001;João Pereira Lima;CRM;123456;SP;Clínica médica
+M002;Ana Beatriz Costa;CRM;54321;RS;Endocrinologia
+M003;Carlos Eduardo Souza;CRM;23456;RS;Cardiologia
+M004;Carla Eduarda Souza;CRM;23456;SC;Ginecologia
+M005;Mariana Alves Rocha;CRM;98765;RS;Pediatria
+M006;Ricardo Nunes;CRO;11223;RS;Odontologia
+M007;Fernanda Lopes;COREN;445566;RS;Enfermagem obstétrica

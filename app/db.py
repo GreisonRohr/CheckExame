@@ -25,6 +25,11 @@ CREATE TABLE IF NOT EXISTS leituras (
     os_numero TEXT,
     duracao_ms INTEGER
 );
+CREATE TABLE IF NOT EXISTS sinonimos_convenio (
+    texto_normalizado TEXT PRIMARY KEY,
+    codigo TEXT NOT NULL,
+    criado_em TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS sinonimos (
     texto_normalizado TEXT PRIMARY KEY,
     codigo TEXT NOT NULL,
@@ -116,6 +121,23 @@ def aprender_sinonimo(texto: str, codigo: str):
     with conexao() as con:
         con.execute(
             "INSERT INTO sinonimos (texto_normalizado, codigo, criado_em) VALUES (?,?,?) "
+            "ON CONFLICT(texto_normalizado) DO UPDATE SET codigo = excluded.codigo",
+            (n, codigo, _agora()),
+        )
+
+
+def convenios_aprendidos() -> dict[str, str]:
+    with conexao() as con:
+        return {r["texto_normalizado"]: r["codigo"] for r in con.execute("SELECT * FROM sinonimos_convenio")}
+
+
+def aprender_convenio(texto: str, codigo: str):
+    n = normalizar(texto)
+    if not n or not codigo:
+        return
+    with conexao() as con:
+        con.execute(
+            "INSERT INTO sinonimos_convenio (texto_normalizado, codigo, criado_em) VALUES (?,?,?) "
             "ON CONFLICT(texto_normalizado) DO UPDATE SET codigo = excluded.codigo",
             (n, codigo, _agora()),
         )

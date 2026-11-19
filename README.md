@@ -111,6 +111,27 @@ melhor o mapeamento. Os sinônimos aprendidos na revisão ficam no banco
 
 Documentação interativa: http://localhost:8000/docs
 
+## Bases do laboratório (exames, fontes pagadoras, profissionais)
+
+Coloque as exportações do LIS na pasta `dados_lab/` (fica **fora do Git**, ver `.gitignore`):
+
+| Arquivo | Conteúdo | Colunas reconhecidas (nomes flexíveis) |
+|---|---|---|
+| `exames.xlsx` ou `.csv` | Exames | mnemônico/código, descrição/nome, material, setor, sinônimos, ativo |
+| `fontes_pagadoras.xlsx` ou `.csv` | Convênios | código, nome/razão social, sinônimos, ativo |
+| `medicos.xlsx` ou `.csv` | Médicos e outros profissionais | código, nome, conselho (CRM, CRO, COREN…), número/CRM, UF, especialidade, ativo |
+
+CSV com `;`, `,` ou tab, em UTF-8 ou Latin-1 (padrão do Excel). Linhas com ativo/situação
+igual a N, 0, inativo ou bloqueado são ignoradas. Sem esses arquivos, o sistema usa os
+exemplos de `data/`. `GET /api/bases` mostra o que está carregado.
+
+- **Fonte pagadora**: a recepcionista seleciona numa lista; o nome lido na requisição
+  sugere a fonte automaticamente, e a escolha é lembrada para o mesmo nome.
+- **Profissional**: o médico lido é comparado com a base por conselho + número + UF;
+  sem UF, o nome desempata; só com o nome, vira sugestão para conferir (homônimos). Ao
+  confirmar, nome, conselho, número e UF passam a ser os da base. Na revisão há busca
+  por nome ou número do conselho.
+
 ## Integração com o Shift
 
 O adaptador `shift` (`app/lis/shift.py`) segue o documento *Integra_RecebePedido_WSHIS

@@ -35,6 +35,11 @@ class Medico(BaseModel):
     conselho: str = ""  # CRM, CRO, COREN...
     numero_conselho: str = ""
     uf_conselho: str = ""
+    # Comparação com a base de profissionais do laboratório
+    codigo: str = ""  # código do profissional na base
+    lido: str = ""  # como veio na requisição, antes da correção pela base
+    situacao: Literal["ok", "revisar", "nao_encontrado", "manual", ""] = ""
+    sugestoes: list[dict] = Field(default_factory=list)
 
 
 class SugestaoExame(BaseModel):

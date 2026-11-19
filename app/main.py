@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from . import config, db
 from .catalogo import Catalogo
 from .convenios import Convenios
+from .medicos import Medicos
 from .extractors import ErroExtracao, criar_extratores
 from .lis import ErroLIS, montar_payload, obter_adaptador, validar_para_os
 from .models import Requisicao
@@ -24,6 +25,7 @@ TAMANHO_MAXIMO = 20 * 1024 * 1024
 app = FastAPI(title="CheckExame", version="0.1.0")
 catalogo = Catalogo.carregar()
 convenios = Convenios.carregar()
+medicos = Medicos.carregar()
 extratores = criar_extratores(catalogo)
 db.init()
 
@@ -54,7 +56,9 @@ def _mapear(req: Requisicao) -> Requisicao:
     for ex in req.exames:
         catalogo.mapear(ex, aprendidos)
     if not req.convenio.codigo:
-        req.convenio.codigo = convenios.mapear(req.convenio.nome)
+        req.convenio.codigo = convenios.mapear(req.convenio.nome, db.convenios_aprendidos())
+    if req.medico.situacao not in ("ok", "manual"):
+        medicos.comparar(req.medico)
     return req
 
 
@@ -83,6 +87,23 @@ def listar_catalogo():
 @app.get("/api/convenios")
 def listar_convenios():
     return convenios.listar()
+
+
+@app.get("/api/medicos")
+def buscar_medicos(q: str = ""):
+    return medicos.buscar(q)
+
+
+@app.get("/api/bases")
+def info_bases():
+    """Quais bases estão carregadas (reais em dados_lab/ ou exemplos)."""
+    def info(caminho, qtd):
+        return {"arquivo": Path(caminho).name, "real": config.LAB_DIR in Path(caminho).parents, "registros": qtd}
+    return {
+        "exames": info(config.CATALOGO_PATH, len(catalogo.itens)),
+        "fontes_pagadoras": info(config.CONVENIOS_PATH, len(convenios.nomes)),
+        "medicos": info(config.MEDICOS_PATH, len(medicos)),
+    }
 
 
 @app.get("/api/catalogo/sugerir")
@@ -154,6 +175,10 @@ def salvar_revisao(leitura_id: int, req: Requisicao):
         raise HTTPException(404, "Leitura não encontrada.")
     if leitura["status"] == "os_gerada":
         raise HTTPException(409, "O.S. já gerada para esta leitura.")
+    # Fonte pagadora escolhida diferente da automática: lembra para o mesmo nome
+    if req.convenio.codigo in convenios.nomes and req.convenio.nome:
+        if convenios.mapear(req.convenio.nome, db.convenios_aprendidos()) != req.convenio.codigo:
+            db.aprender_convenio(req.convenio.nome, req.convenio.codigo)
     # Correções manuais de código viram sinônimos aprendidos
     for ex in req.exames:
         if ex.status_mapeamento == "manual" and ex.codigo_lis in catalogo.itens:
@@ -224,7 +249,7 @@ def estatisticas():
         orig, final = l["dados_originais"], l["dados"]
         for grupo in ("paciente", "convenio", "medico"):
             for k, v in (final.get(grupo) or {}).items():
-                if v:
+                if v and isinstance(v, str) and k not in ("codigo", "lido", "situacao"):
                     campos_total += 1
                     campos_iguais += int((orig.get(grupo) or {}).get(k, "") == v)
         cod_orig = [e.get("codigo_lis") for e in orig.get("exames", [])]

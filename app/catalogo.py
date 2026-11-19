@@ -52,20 +52,24 @@ class Catalogo:
 
     @classmethod
     def carregar(cls, caminho: Path | None = None) -> "Catalogo":
+        from .tabelas import campo, inativo, ler_tabela
+
         caminho = caminho or config.CATALOGO_PATH
-        itens = []
-        with open(caminho, encoding="utf-8") as f:
-            for row in csv.DictReader(f, delimiter=";"):
-                itens.append(
-                    ItemCatalogo(
-                        codigo=row["codigo"].strip(),
-                        nome=row["nome"].strip(),
-                        sinonimos=[s.strip() for s in (row.get("sinonimos") or "").split("|") if s.strip()],
-                        material=(row.get("material") or "").strip(),
-                        setor=(row.get("setor") or "").strip(),
-                    )
-                )
-        return cls(itens)
+        itens: dict[str, ItemCatalogo] = {}
+        for row in ler_tabela(caminho):
+            codigo = campo(row, "codigo", "mnemonico", "mnemônico", "sigla", "cod_exame", "codigo_exame", "exame")
+            nome = campo(row, "nome", "descricao", "descrição", "nome_exame", "descricao_exame")
+            if not codigo or inativo(row):
+                continue
+            sinonimos = re.split(r"[|;,]", campo(row, "sinonimos", "sinônimos", "apelidos", "nomes_alternativos"))
+            itens.setdefault(codigo, ItemCatalogo(
+                codigo=codigo,
+                nome=nome or codigo,
+                sinonimos=[s.strip() for s in sinonimos if s.strip()],
+                material=campo(row, "material", "desc_material", "descmaterial", "amostra"),
+                setor=campo(row, "setor", "bancada", "grupo"),
+            ))
+        return cls(list(itens.values()))
 
     def listar(self) -> list[dict]:
         return [

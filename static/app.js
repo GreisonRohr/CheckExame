@@ -35,7 +35,8 @@ async function carregarStats() {
 // ------------------------------------------------------------------ upload
 async function init() {
   const [ext, cat, conv] = await Promise.all([api("/api/extratores"), api("/api/catalogo"), api("/api/convenios")]);
-  $("#dl-convenios").innerHTML = conv.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nome)}</option>`).join("");
+  $("#sel-convenio").innerHTML = `<option value="">— selecione a fonte pagadora —</option>` +
+    conv.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nome)} (${esc(c.codigo)})</option>`).join("");
   catalogo = cat;
   $("#dl-catalogo").innerHTML = cat.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nome)}</option>`).join("");
   const sel = $("#sel-extrator");
@@ -118,10 +119,16 @@ function abrirRevisao(leitura) {
   const incertos = new Set(d.campos_incertos || []);
   $$("[data-c]").forEach((el) => {
     const v = getPath(d, el.dataset.c);
+    if (el.tagName === "SELECT" && v && ![...el.options].some((o) => o.value === v)) el.add(new Option(`${v} (não cadastrado)`, v));
     if (el.type === "checkbox") el.checked = !!v;
     else el.value = v ?? "";
     el.classList.toggle("incerto", incertos.has(el.dataset.c));
   });
+  $("#sel-convenio").classList.toggle("incerto", !d.convenio?.codigo);
+  medMeta = { codigo: d.medico?.codigo || "", lido: d.medico?.lido || "", situacao: d.medico?.situacao || "", sugestoes: d.medico?.sugestoes || [] };
+  renderMedico();
+  $("#busca-med").value = "";
+  $("#med-res").innerHTML = "";
 
   const alertas = [];
   if (leitura.erro) alertas.push(`<div class="alerta erro">${esc(leitura.erro)}</div>`);
@@ -188,9 +195,50 @@ $("#btn-add-exame").addEventListener("click", () => {
   $(".ex-texto", tr).focus();
 });
 
+// ------------------------------------------------------------------ médico x base de profissionais
+let medMeta = { codigo: "", lido: "", situacao: "", sugestoes: [] };
+const MED_ST = { ok: ["ok", "confirmado na base"], manual: ["manual", "selecionado na base"], revisar: ["revisar", "confira na base"], nao_encontrado: ["nao_encontrado", "não está na base"] };
+const descProf = (p) => `${esc(p.nome)} · ${esc(p.conselho)} ${esc(p.numero)}${p.uf ? "/" + esc(p.uf) : ""}${p.especialidade ? " · " + esc(p.especialidade) : ""}`;
+
+function renderMedico() {
+  const st = MED_ST[medMeta.situacao];
+  const sugs = medMeta.situacao === "revisar" ? medMeta.sugestoes : [];
+  $("#med-info").innerHTML = !st ? "" : `<span class="badge st-${st[0]}">${st[1]}</span>
+    ${medMeta.lido ? `<small class="muted"> lido na requisição: ${esc(medMeta.lido)}</small>` : ""}
+    ${sugs.length ? `<div class="sugs">${sugs.map((p, i) => `<button type="button" data-i="${i}">${descProf(p)}</button>`).join("")}</div>` : ""}`;
+  $$("#med-info .sugs button").forEach((b) => b.addEventListener("click", () => aplicarMedico(sugs[+b.dataset.i])));
+}
+
+function aplicarMedico(p) {
+  const campos = { "medico.nome": p.nome, "medico.conselho": p.conselho, "medico.numero_conselho": p.numero, "medico.uf_conselho": p.uf };
+  for (const [c, v] of Object.entries(campos)) $(`[data-c="${c}"]`).value = v || "";
+  Object.assign(medMeta, { codigo: p.codigo, situacao: "manual", sugestoes: [] });
+  $("#busca-med").value = "";
+  $("#med-res").innerHTML = "";
+  renderMedico();
+}
+
+["medico.nome", "medico.conselho", "medico.numero_conselho", "medico.uf_conselho"].forEach((c) =>
+  $(`[data-c="${c}"]`).addEventListener("input", () => {
+    if (medMeta.situacao === "ok" || medMeta.situacao === "manual") { Object.assign(medMeta, { codigo: "", situacao: "" }); renderMedico(); }
+  }));
+
+let buscaTimer;
+$("#busca-med").addEventListener("input", (e) => {
+  clearTimeout(buscaTimer);
+  const q = e.target.value.trim();
+  buscaTimer = setTimeout(async () => {
+    const res = q.length >= 3 ? await api(`/api/medicos?q=${encodeURIComponent(q)}`) : [];
+    $("#med-res").innerHTML = res.length ? `<div class="sugs">${res.map((p, i) => `<button type="button" data-i="${i}">${descProf(p)}</button>`).join("")}</div>`
+      : q.length >= 3 ? `<small class="muted">Nenhum profissional encontrado.</small>` : "";
+    $$("#med-res button").forEach((b) => b.addEventListener("click", () => aplicarMedico(res[+b.dataset.i])));
+  }, 300);
+});
+
 function coletar() {
   const d = structuredClone(atual.dados || {});
   $$("[data-c]").forEach((el) => setPath(d, el.dataset.c, el.type === "checkbox" ? el.checked : el.value.trim()));
+  Object.assign(d.medico, medMeta);
   d.exames = $$("#tab-exames tbody tr").map((tr) => tr._ex).filter((ex) => ex.texto_original || ex.codigo_lis);
   return d;
 }
@@ -249,5 +297,7 @@ async function carregarHistorico() {
   $$("#tab-hist tbody tr[data-id]").forEach((tr) =>
     tr.addEventListener("click", async () => abrirRevisao(await api(`/api/leituras/${tr.dataset.id}`))));
 }
+
+$("#sel-convenio").addEventListener("change", (e) => e.target.classList.toggle("incerto", !e.target.value));
 
 init();

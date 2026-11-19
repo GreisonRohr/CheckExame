@@ -6,7 +6,20 @@ DATA_DIR = Path(os.getenv("CHECKEXAME_DATA_DIR", BASE_DIR / "data"))
 UPLOAD_DIR = DATA_DIR / "uploads"
 OS_DIR = DATA_DIR / "os_geradas"
 DB_PATH = DATA_DIR / "checkexame.db"
-CATALOGO_PATH = Path(os.getenv("CHECKEXAME_CATALOGO", BASE_DIR / "data" / "catalogo_exames.csv"))
+# Bases reais do laboratório (exportadas do LIS). Ficam fora do Git (.gitignore).
+# Sem elas, o sistema usa os exemplos em data/.
+LAB_DIR = Path(os.getenv("CHECKEXAME_BASES", BASE_DIR / "dados_lab"))
+
+
+def _base(nome: str, exemplo: str) -> Path:
+    for ext in (".xlsx", ".csv", ".txt"):
+        if (LAB_DIR / f"{nome}{ext}").exists():
+            return LAB_DIR / f"{nome}{ext}"
+    return BASE_DIR / "data" / exemplo
+
+
+CATALOGO_PATH = Path(os.getenv("CHECKEXAME_CATALOGO") or _base("exames", "catalogo_exames.csv"))
+MEDICOS_PATH = Path(os.getenv("CHECKEXAME_MEDICOS") or _base("medicos", "medicos.csv"))
 
 # Claude
 CLAUDE_MODEL = os.getenv("CHECKEXAME_CLAUDE_MODEL", "claude-opus-5-5")
@@ -45,4 +58,4 @@ SHIFT_POSTO = os.getenv("CHECKEXAME_SHIFT_POSTO", "")  # código do posto/setor 
 SHIFT_CONVENIO_PADRAO = os.getenv("CHECKEXAME_SHIFT_CONVENIO_PADRAO", "")  # usado quando o convênio não é reconhecido
 SHIFT_PREFIXO = os.getenv("CHECKEXAME_SHIFT_PREFIXO", "CKX")  # prefixo do código do pedido gerado
 SHIFT_TIMEOUT = float(os.getenv("CHECKEXAME_SHIFT_TIMEOUT", "60"))
-CONVENIOS_PATH = Path(os.getenv("CHECKEXAME_CONVENIOS", BASE_DIR / "data" / "convenios.csv"))
+CONVENIOS_PATH = Path(os.getenv("CHECKEXAME_CONVENIOS") or _base("fontes_pagadoras", "convenios.csv"))

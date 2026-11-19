@@ -80,8 +80,8 @@
         <fieldset>
           <legend>Convênio</legend>
           <div class="grid">
-            <label>Convênio <input data-c="convenio.nome"></label>
-            <label>Cód. convênio no LIS <input data-c="convenio.codigo" list="dl-convenios"></label>
+            <label class="span2">Fonte pagadora <select data-c="convenio.codigo" id="sel-convenio"></select></label>
+            <label class="span2">Convênio como está na requisição <input data-c="convenio.nome"></label>
             <label>Plano <input data-c="convenio.plano"></label>
             <label>Carteirinha <input data-c="convenio.carteirinha"></label>
             <label>Validade <input data-c="convenio.validade_carteirinha"></label>
@@ -96,6 +96,9 @@
             <label>Conselho <input data-c="medico.conselho" placeholder="CRM"></label>
             <label>Número <input data-c="medico.numero_conselho"></label>
             <label>UF <input data-c="medico.uf_conselho" maxlength="2"></label>
+            <div class="span4" id="med-info"></div>
+            <label class="span2">Buscar profissional na base <input id="busca-med" placeholder="nome ou nº do conselho" autocomplete="off"></label>
+            <div class="span2" id="med-res"></div>
             <label>Data do pedido <input data-c="data_solicitacao" placeholder="DD/MM/AAAA"></label>
             <label>CID <input data-c="cid"></label>
             <label class="check"><input type="checkbox" data-c="urgente"> Urgente</label>
@@ -110,7 +113,6 @@
             <tbody></tbody>
           </table>
           <datalist id="dl-catalogo"></datalist>
-          <datalist id="dl-convenios"></datalist>
         </fieldset>
 
         <fieldset>

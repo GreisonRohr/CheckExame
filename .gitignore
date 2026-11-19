@@ -6,3 +6,6 @@ __pycache__/
 data/uploads/
 data/os_geradas/
 data/*.db
+
+# Bases reais do laboratório (exames, fontes pagadoras, médicos): nunca no Git
+dados_lab/
