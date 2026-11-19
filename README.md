@@ -50,6 +50,25 @@ Acesse http://localhost:8000. Há um exemplo em `exemplos/requisicao_impressa.tx
 
 Testes: `pytest`
 
+### Testar pelo celular
+
+**Na rede da sua casa/laboratório:** rode o servidor no computador com
+`uvicorn app.main:app --host 0.0.0.0 --port 8000` e, no celular conectado ao mesmo
+Wi-Fi, abra `http://IP-DO-COMPUTADOR:8000` (o IP aparece em `ipconfig` no Windows ou
+`ip addr` no Linux).
+
+**Na internet (Render, plano gratuito):**
+1. Crie uma conta em https://render.com e conecte o GitHub.
+2. *New → Web Service*, escolha o repositório `CheckExame` e o branch deste trabalho.
+   O Render detecta o `Dockerfile`.
+3. Em *Environment*, defina `ANTHROPIC_API_KEY` (sua chave da API) e
+   `CHECKEXAME_SENHA` (senha de acesso ao site; o usuário é `checkexame`).
+4. Abra o endereço `https://….onrender.com` gerado e entre com usuário e senha.
+
+No plano gratuito o servidor "dorme" após um tempo sem uso (a primeira abertura
+demora ~1 minuto) e o histórico é apagado a cada nova publicação. Para testes com
+requisições reais, defina sempre a senha.
+
 ### Configuração (variáveis de ambiente — ver `.env.example`)
 
 | Variável | Padrão | Descrição |
@@ -61,6 +80,7 @@ Testes: `pytest`
 | `CHECKEXAME_CATALOGO` | `data/catalogo_exames.csv` | Catálogo de exames do LIS |
 | `CHECKEXAME_LIS_ADAPTER` | `mock` | `mock` (grava JSON em `data/os_geradas/`) ou `http` |
 | `CHECKEXAME_LIS_URL` / `_TOKEN` | — | Endpoint e token para o adaptador `http` |
+| `CHECKEXAME_SENHA` / `_USUARIO` | — / `checkexame` | Se a senha estiver definida, o site pede login |
 
 ## Catálogo de exames
 

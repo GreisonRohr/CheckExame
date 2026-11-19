@@ -1,13 +1,15 @@
 """API web do CheckExame — leitura de requisições médicas e geração de O.S."""
 from __future__ import annotations
 
+import base64
 import mimetypes
+import secrets
 import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from . import config, db
@@ -22,6 +24,27 @@ app = FastAPI(title="CheckExame", version="0.1.0")
 catalogo = Catalogo.carregar()
 extratores = criar_extratores(catalogo)
 db.init()
+
+
+@app.middleware("http")
+async def exigir_senha(request: Request, call_next):
+    """Protege o site com usuário/senha quando CHECKEXAME_SENHA está definida."""
+    if not config.SENHA or request.url.path == "/saude":
+        return await call_next(request)
+    cab = request.headers.get("authorization", "")
+    if cab.startswith("Basic "):
+        try:
+            usuario, _, senha = base64.b64decode(cab[6:]).decode().partition(":")
+        except Exception:  # noqa: BLE001
+            usuario = senha = ""
+        if secrets.compare_digest(usuario, config.USUARIO) and secrets.compare_digest(senha, config.SENHA):
+            return await call_next(request)
+    return Response("Acesso restrito", status_code=401, headers={"WWW-Authenticate": 'Basic realm="CheckExame"'})
+
+
+@app.get("/saude")
+def saude():
+    return {"ok": True}
 
 
 def _mapear(req: Requisicao) -> Requisicao:

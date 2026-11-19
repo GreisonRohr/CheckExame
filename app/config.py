@@ -24,3 +24,7 @@ LIS_TOKEN = os.getenv("CHECKEXAME_LIS_TOKEN", "")
 
 for d in (DATA_DIR, UPLOAD_DIR, OS_DIR):
     d.mkdir(parents=True, exist_ok=True)
+
+# Acesso: se CHECKEXAME_SENHA estiver definida, o site pede usuário e senha (HTTP Basic)
+USUARIO = os.getenv("CHECKEXAME_USUARIO", "checkexame")
+SENHA = os.getenv("CHECKEXAME_SENHA", "")

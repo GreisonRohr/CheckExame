@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: checkexame
+    runtime: docker
+    plan: free
+    healthCheckPath: /saude
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CHECKEXAME_SENHA
+        sync: false
+      - key: CHECKEXAME_USUARIO
+        value: checkexame

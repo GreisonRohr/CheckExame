@@ -97,3 +97,17 @@ def test_claude_indisponivel_sem_chave(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
     r = client.post("/api/leituras", data={"extrator": "claude", "texto": "Exames: hemograma"})
     assert r.json()["status"] == "erro"
+
+
+def test_senha(monkeypatch):
+    import base64
+
+    from app import config
+
+    monkeypatch.setattr(config, "SENHA", "s3gredo")
+    assert client.get("/api/extratores").status_code == 401
+    assert client.get("/saude").status_code == 200
+    ok = base64.b64encode(b"checkexame:s3gredo").decode()
+    assert client.get("/api/extratores", headers={"Authorization": f"Basic {ok}"}).status_code == 200
+    ruim = base64.b64encode(b"checkexame:errada").decode()
+    assert client.get("/api/extratores", headers={"Authorization": f"Basic {ruim}"}).status_code == 401

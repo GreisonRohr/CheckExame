@@ -28,9 +28,15 @@ button.mini { padding: 1px 8px; font-size: 12px; margin-left: 8px; }
 .muted { color: var(--cinza); }
 .aviso { color: var(--amarelo); }
 #form-upload { display: flex; flex-direction: column; gap: 12px; }
-#dropzone { border: 2px dashed var(--borda); border-radius: 8px; padding: 28px; text-align: center; cursor: pointer; position: relative; }
+#dropzone { border: 2px dashed var(--borda); border-radius: 8px; padding: 20px; text-align: center; }
 #dropzone.sobre { border-color: var(--azul); background: var(--azul-claro); }
-#dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.botoes { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; }
+.btnf { display: inline-flex; align-items: center; min-height: 46px; padding: 10px 20px; border: 1px solid var(--borda); border-radius: 6px; background: #fff; color: #1f2937; font-size: 16px; cursor: pointer; position: relative; overflow: hidden; }
+.btnf.primario { background: var(--azul); border-color: var(--azul); color: #fff; }
+.btnf input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+#mini { display: block; max-width: 220px; max-height: 220px; margin: 8px auto 0; border-radius: 6px; border: 1px solid var(--borda); }
+#mini[hidden] { display: none; }
+@media (max-width: 600px) { header { flex-wrap: wrap; gap: 8px; } #stats { margin-left: 0; } .grid { grid-template-columns: repeat(2, 1fr); } }
 #dropzone p { margin: 4px 0; }
 #arquivo-nome { font-weight: 600; color: var(--azul); }
 

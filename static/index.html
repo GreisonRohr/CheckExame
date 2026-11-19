@@ -28,10 +28,13 @@
         <small id="extrator-aviso" class="aviso"></small>
 
         <div id="dropzone">
-          <p><strong>Arraste a requisição aqui</strong> ou clique para escolher</p>
-          <p class="muted">Foto (JPG, PNG, WEBP), PDF ou TXT</p>
-          <input type="file" id="arquivo" name="arquivo" accept="image/*,application/pdf,text/plain">
+          <div class="botoes">
+            <label class="btnf primario">Escolher arquivo<input type="file" id="arquivo" accept="image/*,application/pdf,text/plain"></label>
+            <label class="btnf">Tirar foto<input type="file" id="camera" accept="image/*" capture="environment"></label>
+          </div>
+          <p class="muted">Foto (JPG, PNG, WEBP), PDF ou TXT. No computador, também dá para arrastar o arquivo para cá.</p>
           <p id="arquivo-nome"></p>
+          <img id="mini" alt="Requisição selecionada" hidden>
         </div>
 
         <details>

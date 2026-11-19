@@ -53,23 +53,29 @@ async function init() {
 const dz = $("#dropzone");
 ["dragenter", "dragover"].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add("sobre"); }));
 ["dragleave", "drop"].forEach((ev) => dz.addEventListener(ev, () => dz.classList.remove("sobre")));
-dz.addEventListener("drop", (e) => {
-  e.preventDefault();
-  $("#arquivo").files = e.dataTransfer.files;
-  $("#arquivo-nome").textContent = e.dataTransfer.files[0]?.name || "";
-});
-$("#arquivo").addEventListener("change", (e) => ($("#arquivo-nome").textContent = e.target.files[0]?.name || ""));
+let arquivoSel = null;
+let miniURL = null;
+function selecionar(f) {
+  arquivoSel = f || null;
+  $("#arquivo-nome").textContent = f ? `${f.name} · ${Math.max(1, Math.round(f.size / 1024))} KB` : "";
+  if (miniURL) URL.revokeObjectURL(miniURL);
+  miniURL = f && f.type.startsWith("image/") ? URL.createObjectURL(f) : null;
+  $("#mini").hidden = !miniURL;
+  if (miniURL) $("#mini").src = miniURL;
+}
+dz.addEventListener("drop", (e) => { e.preventDefault(); selecionar(e.dataTransfer.files[0]); });
+["#arquivo", "#camera"].forEach((id) => $(id).addEventListener("change", (e) => { selecionar(e.target.files[0]); e.target.value = ""; }));
 
 $("#form-upload").addEventListener("submit", async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
-  if (!$("#arquivo").files.length) fd.delete("arquivo");
+  if (arquivoSel) fd.append("arquivo", arquivoSel, arquivoSel.name);
   $("#btn-ler").disabled = true;
   $("#lendo").hidden = false;
   try {
     const leitura = await api("/api/leituras", { method: "POST", body: fd });
     e.target.reset();
-    $("#arquivo-nome").textContent = "";
+    selecionar(null);
     abrirRevisao(leitura);
   } catch (err) {
     alert("Erro: " + err.message);
