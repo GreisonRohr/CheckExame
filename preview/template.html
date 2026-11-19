@@ -52,10 +52,16 @@ label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mute
 .modo label:has(input:checked){border-color:var(--azul);background:var(--azul-bg)}
 .modo input{width:auto;min-height:0;margin-top:3px}
 .modo b{display:block}
-#drop{border:2px dashed var(--line);border-radius:10px;padding:34px 16px;text-align:center;position:relative;cursor:pointer;transition:background .15s}
+#drop{border:2px dashed var(--line);border-radius:10px;padding:22px 16px;text-align:center;transition:background .15s}
 #drop.on{border-color:var(--azul);background:var(--azul-bg)}
-#drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
 #drop p{margin:2px 0}
+.botoes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0 8px}
+.btnf{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 20px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font-size:16px;cursor:pointer;position:relative;overflow:hidden}
+.btnf.pri{background:var(--azul);border-color:var(--azul);color:light-dark(#fff,#0e131b);font-weight:600}
+.btnf input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.btnf:focus-within{outline:2px solid var(--azul);outline-offset:2px}
+#colar{margin-top:10px;min-height:44px;font-size:14px;text-align:center}
+#mini[hidden]{display:none}#mini{display:block;max-width:220px;max-height:220px;margin:10px auto 0;border-radius:6px;border:1px solid var(--line)}
 #nomeArq{font-weight:600;color:var(--azul)}
 details{margin:12px 0}
 summary{cursor:pointer;color:var(--azul)}
@@ -128,10 +134,15 @@ td.n{text-align:right;white-space:nowrap}
       </div>
       <div id="avisoClaude"></div>
       <div id="drop">
-        <p><b>Arraste a requisição aqui</b> ou toque para escolher</p>
-        <p class="muted small">JPG, PNG, WEBP ou PDF</p>
-        <input type="file" id="arq" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,text/plain">
+        <div class="botoes">
+          <label class="btnf pri">Escolher arquivo<input type="file" id="arq" accept="image/*,application/pdf"></label>
+          <label class="btnf">Tirar foto<input type="file" id="cam" accept="image/*" capture="environment"></label>
+        </div>
+        <p class="muted small">Foto JPG, PNG ou WEBP, ou PDF. No computador, também dá para arrastar o arquivo para cá.</p>
+        <textarea id="colar" rows="2" placeholder="Ou toque e segure aqui e escolha Colar para usar uma imagem copiada"></textarea>
         <p id="nomeArq"></p>
+        <img id="mini" alt="Requisição selecionada" hidden>
+        <div id="dicaSel"></div>
       </div>
       <details id="detTexto">
         <summary>Ou colar o texto da requisição</summary>
@@ -429,8 +440,36 @@ let ctl = null;
 const drop = $("#drop");
 ["dragenter", "dragover"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("on"); }));
 ["dragleave", "drop"].forEach(e => drop.addEventListener(e, () => drop.classList.remove("on")));
-drop.addEventListener("drop", ev => { ev.preventDefault(); $("#arq").files = ev.dataTransfer.files; $("#nomeArq").textContent = ev.dataTransfer.files[0]?.name || ""; });
-$("#arq").addEventListener("change", e => $("#nomeArq").textContent = e.target.files[0]?.name || "");
+let arquivoSel = null, miniURL = null;
+function selecionar(f) {
+  arquivoSel = f || null;
+  $("#dicaSel").innerHTML = "";
+  $("#nomeArq").textContent = f ? (f.name || "imagem colada") + " · " + Math.max(1, Math.round(f.size / 1024)) + " KB" : "";
+  if (miniURL) URL.revokeObjectURL(miniURL);
+  miniURL = f && f.type.startsWith("image/") ? URL.createObjectURL(f) : null;
+  $("#mini").hidden = !miniURL; if (miniURL) $("#mini").src = miniURL;
+}
+drop.addEventListener("drop", ev => { ev.preventDefault(); selecionar(ev.dataTransfer.files[0]); });
+for (const id of ["#arq", "#cam"]) $(id).addEventListener("change", e => { selecionar(e.target.files[0]); e.target.value = ""; });
+function imagemColada(ev) {
+  const it = [...(ev.clipboardData?.items || [])].find(i => i.kind === "file" && i.type.startsWith("image/"));
+  if (!it) return false;
+  ev.preventDefault();
+  const f = it.getAsFile();
+  selecionar(new File([f], "imagem-colada." + (f.type.split("/")[1] || "png"), { type: f.type }));
+  return true;
+}
+$("#colar").addEventListener("paste", ev => { if (!imagemColada(ev)) setTimeout(() => { $("#colar").value = ""; }, 0); });
+document.addEventListener("paste", ev => { if (!$("#v-importar").hidden && ev.target.id !== "txt" && ev.target.id !== "colar") imagemColada(ev); });
+// Se o app não abrir o seletor de arquivos, a página continua com foco: mostra uma dica.
+$$(".btnf").forEach(l => l.addEventListener("click", () => {
+  let saiu = false; const marca = () => { saiu = true; };
+  window.addEventListener("blur", marca, { once: true }); document.addEventListener("visibilitychange", marca, { once: true });
+  setTimeout(() => {
+    window.removeEventListener("blur", marca); document.removeEventListener("visibilitychange", marca);
+    if (!saiu && !arquivoSel && document.hasFocus()) $("#dicaSel").innerHTML = `<div class="aviso">Se o seletor de arquivos não abriu, este app pode estar bloqueando a escolha de arquivos. Abra o link da página no navegador (Chrome ou Safari) ou copie a imagem e cole no campo acima.</div>`;
+  }, 2000);
+}));
 $$("input[name=modo]").forEach(r => r.addEventListener("change", () => { atualizarAvisoClaude(); if (r.value === "texto" && r.checked) $("#detTexto").open = true; }));
 $("#bEx").addEventListener("click", () => { $("#txt").value = EXEMPLO; $("input[name=modo][value=texto]").checked = true; atualizarAvisoClaude(); });
 $("#bStop").addEventListener("click", () => ctl?.abort());
@@ -445,7 +484,7 @@ const ERROS = {
 
 $("#fImp").addEventListener("submit", async ev => {
   ev.preventDefault();
-  const modo = $("input[name=modo]:checked").value, f = $("#arq").files[0], texto = $("#txt").value.trim();
+  const modo = $("input[name=modo]:checked").value, f = arquivoSel, texto = $("#txt").value.trim();
   const msg = $("#impMsg"); msg.innerHTML = "";
   if (!f && !texto) { msg.innerHTML = `<div class="aviso err">Envie um arquivo ou cole o texto da requisição.</div>`; return; }
   const leit = { id: proxId(), criado: new Date().toISOString(), arquivo: f ? f.name : "texto colado", modo, status: "lida", previa: null, erro: "" };
@@ -487,7 +526,7 @@ $("#fImp").addEventListener("submit", async ev => {
   }
   leit.ms = Math.round(performance.now() - ini);
   salvarLeitura(leit);
-  $("#fImp").reset(); $("#nomeArq").textContent = ""; atualizarAvisoClaude();
+  $("#fImp").reset(); selecionar(null); atualizarAvisoClaude();
   abrir(leit.id);
 });
 
