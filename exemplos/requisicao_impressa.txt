@@ -1,0 +1,25 @@
+CLÍNICA SÃO LUCAS - Rua das Flores, 100
+SOLICITAÇÃO DE EXAMES
+
+Paciente: Maria Aparecida dos Santos
+Data de nascimento: 14/03/1975        Sexo: F
+CPF: 123.456.789-09
+Convênio: Unimed      Carteirinha: 0 123 456789012 3
+Indicação clínica: check-up anual, HAS
+CID: I10
+
+Exames solicitados:
+- Hemograma completo
+- Glicemia de jejum
+- Hb glicada
+- Colesterol total e frações
+- Triglicerídeos
+- Ureia, creatinina
+- TGO / TGP
+- TSH + T4 livre
+- Urina tipo 1
+- Vit D
+
+Data: 10/11/2026
+Dr. João Pereira Lima
+CRM-SP 123456

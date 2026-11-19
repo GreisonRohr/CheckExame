@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CheckExame — Leitura de requisições</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>CheckExame</h1>
+  <nav>
+    <button data-view="nova" class="ativo">Nova leitura</button>
+    <button data-view="historico">Histórico</button>
+  </nav>
+  <div id="stats"></div>
+</header>
+
+<main>
+  <!-- NOVA LEITURA -->
+  <section id="view-nova" class="view">
+    <div class="card">
+      <h2>Importar requisição</h2>
+      <form id="form-upload">
+        <label>Extrator
+          <select name="extrator" id="sel-extrator"></select>
+        </label>
+        <small id="extrator-aviso" class="aviso"></small>
+
+        <div id="dropzone">
+          <p><strong>Arraste a requisição aqui</strong> ou clique para escolher</p>
+          <p class="muted">Foto (JPG, PNG, WEBP), PDF ou TXT</p>
+          <input type="file" id="arquivo" name="arquivo" accept="image/*,application/pdf,text/plain">
+          <p id="arquivo-nome"></p>
+        </div>
+
+        <details>
+          <summary>…ou colar o texto da requisição</summary>
+          <textarea name="texto" rows="10" placeholder="Paciente: Maria da Silva&#10;Nascimento: 01/02/1980&#10;Exames: hemograma, glicemia de jejum, TSH, T4 livre"></textarea>
+        </details>
+
+        <button type="submit" id="btn-ler" class="primario">Ler requisição</button>
+        <span id="lendo" class="muted" hidden>Lendo… (pode levar alguns segundos)</span>
+      </form>
+    </div>
+  </section>
+
+  <!-- REVISÃO -->
+  <section id="view-revisao" class="view" hidden>
+    <div class="revisao">
+      <div class="painel-doc card">
+        <div class="doc-topo">
+          <strong id="rev-titulo"></strong>
+          <span id="rev-status" class="badge"></span>
+        </div>
+        <div id="doc-preview"></div>
+      </div>
+
+      <form id="form-rev" class="painel-form card">
+        <div id="rev-alertas"></div>
+
+        <fieldset>
+          <legend>Paciente</legend>
+          <div class="grid">
+            <label class="span2">Nome <input data-c="paciente.nome"></label>
+            <label>Nascimento <input data-c="paciente.data_nascimento" placeholder="DD/MM/AAAA"></label>
+            <label>Sexo
+              <select data-c="paciente.sexo"><option value=""></option><option>M</option><option>F</option></select>
+            </label>
+            <label>CPF <input data-c="paciente.cpf"></label>
+            <label>CNS <input data-c="paciente.cns"></label>
+            <label>Telefone <input data-c="paciente.telefone"></label>
+            <label>Nome da mãe <input data-c="paciente.nome_mae"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Convênio</legend>
+          <div class="grid">
+            <label>Convênio <input data-c="convenio.nome"></label>
+            <label>Plano <input data-c="convenio.plano"></label>
+            <label>Carteirinha <input data-c="convenio.carteirinha"></label>
+            <label>Validade <input data-c="convenio.validade_carteirinha"></label>
+            <label>Nº guia <input data-c="convenio.numero_guia"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Solicitante</legend>
+          <div class="grid">
+            <label class="span2">Médico <input data-c="medico.nome"></label>
+            <label>Conselho <input data-c="medico.conselho" placeholder="CRM"></label>
+            <label>Número <input data-c="medico.numero_conselho"></label>
+            <label>UF <input data-c="medico.uf_conselho" maxlength="2"></label>
+            <label>Data do pedido <input data-c="data_solicitacao" placeholder="DD/MM/AAAA"></label>
+            <label>CID <input data-c="cid"></label>
+            <label class="check"><input type="checkbox" data-c="urgente"> Urgente</label>
+            <label class="span3">Indicação clínica <input data-c="indicacao_clinica"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Exames <button type="button" id="btn-add-exame" class="mini">+ adicionar</button></legend>
+          <table id="tab-exames">
+            <thead><tr><th>Na requisição</th><th>Código LIS</th><th>Exame no LIS</th><th></th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <datalist id="dl-catalogo"></datalist>
+        </fieldset>
+
+        <fieldset>
+          <legend>Observações</legend>
+          <textarea data-c="observacoes" rows="2"></textarea>
+        </fieldset>
+
+        <div class="acoes">
+          <button type="button" id="btn-salvar">Salvar revisão</button>
+          <button type="button" id="btn-os" class="primario">Gerar O.S. no LIS</button>
+        </div>
+        <div id="rev-msg"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section id="view-historico" class="view" hidden>
+    <div class="card">
+      <h2>Leituras</h2>
+      <table id="tab-hist">
+        <thead><tr><th>#</th><th>Data</th><th>Arquivo</th><th>Extrator</th><th>Paciente</th><th>Exames</th><th>Tempo</th><th>Status</th><th>O.S.</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
