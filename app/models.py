@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 
 class Paciente(BaseModel):
+    codigo: str = ""  # código do paciente no sistema de destino (vazio = gerado na O.S.)
     nome: str = ""
     data_nascimento: str = ""  # DD/MM/AAAA
     sexo: str = ""  # M, F ou vazio
@@ -21,6 +22,7 @@ class Paciente(BaseModel):
 
 
 class Convenio(BaseModel):
+    codigo: str = ""  # código do convênio no LIS (mapeado a partir do nome)
     nome: str = ""  # vazio ou "PARTICULAR" quando não houver
     plano: str = ""
     carteirinha: str = ""

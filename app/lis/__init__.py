@@ -35,11 +35,19 @@ def validar_para_os(req: Requisicao) -> list[str]:
     return erros
 
 
-def montar_payload(req: Requisicao, leitura_id: int) -> dict:
+def codigo_pedido(leitura_id: int, criado_em: str) -> str:
+    """Código único e estável do pedido: prefixo + data da leitura + id."""
+    data = (criado_em or "")[:10].replace("-", "")[2:] or datetime.now().strftime("%y%m%d")
+    return f"{config.SHIFT_PREFIXO}{data}{leitura_id:05d}"
+
+
+def montar_payload(req: Requisicao, leitura_id: int, criado_em: str = "", materiais: dict | None = None) -> dict:
     """Formato neutro de O.S. — o adaptador converte para o formato do LIS."""
+    materiais = materiais or {}
     return {
         "origem": "checkexame",
         "leitura_id": leitura_id,
+        "codigo_pedido": codigo_pedido(leitura_id, criado_em),
         "paciente": req.paciente.model_dump(),
         "convenio": req.convenio.model_dump(),
         "medico": req.medico.model_dump(),
@@ -49,7 +57,8 @@ def montar_payload(req: Requisicao, leitura_id: int) -> dict:
         "urgente": req.urgente,
         "observacoes": req.observacoes,
         "exames": [
-            {"codigo": e.codigo_lis, "nome": e.nome_lis, "texto_requisicao": e.texto_original, "observacao": e.observacao}
+            {"codigo": e.codigo_lis, "nome": e.nome_lis, "material": materiais.get(e.codigo_lis, ""),
+             "texto_requisicao": e.texto_original, "observacao": e.observacao}
             for e in req.exames
         ],
     }
@@ -58,9 +67,32 @@ def montar_payload(req: Requisicao, leitura_id: int) -> dict:
 class AdaptadorLIS(ABC):
     nome = ""
 
+    def pendencias(self, payload: dict) -> list[str]:
+        """Validações específicas do LIS (além de validar_para_os)."""
+        return []
+
     @abstractmethod
     def criar_os(self, payload: dict) -> dict:
         """Cria a O.S. e devolve ao menos {"os_numero": "..."}."""
+
+
+class AdaptadorShift(AdaptadorLIS):
+    """LIS Shift via web service de recepção de pedidos (ver app/lis/shift.py)."""
+
+    nome = "shift"
+
+    def pendencias(self, payload: dict) -> list[str]:
+        from .shift import pendencias_shift
+
+        return pendencias_shift(payload)
+
+    def criar_os(self, payload: dict) -> dict:
+        from .shift import ErroShift, enviar
+
+        try:
+            return enviar(payload)
+        except ErroShift as e:
+            raise ErroLIS(str(e)) from e
 
 
 class AdaptadorMock(AdaptadorLIS):
@@ -97,7 +129,7 @@ class AdaptadorHTTP(AdaptadorLIS):
 
 
 def obter_adaptador() -> AdaptadorLIS:
-    adaptadores = {a.nome: a for a in (AdaptadorMock(), AdaptadorHTTP())}
+    adaptadores = {a.nome: a for a in (AdaptadorMock(), AdaptadorHTTP(), AdaptadorShift())}
     if config.LIS_ADAPTER not in adaptadores:
         raise ErroLIS(f"Adaptador LIS desconhecido: {config.LIS_ADAPTER}")
     return adaptadores[config.LIS_ADAPTER]

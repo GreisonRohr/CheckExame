@@ -1,5 +1,5 @@
 codigo;nome;sinonimos;material;setor
-HMG;Hemograma completo;hemograma|hmg|hemo|hc|hemograma c/ plaquetas|hemograma com plaquetas|eritrograma|leucograma;Sangue EDTA;Hematologia
+HEMO;Hemograma completo;hemograma|hmg|hemo|hc|hemograma c/ plaquetas|hemograma com plaquetas|eritrograma|leucograma;Sangue Total (HEMO);Hematologia
 PLAQ;Contagem de plaquetas;plaquetas|plt|contagem plaquetas;Sangue EDTA;Hematologia
 RETIC;Reticulócitos;reticulocitos|retic;Sangue EDTA;Hematologia
 VHS;Velocidade de hemossedimentação;vhs|vsg|hemossedimentacao;Sangue EDTA;Hematologia
@@ -9,12 +9,12 @@ FIB;Fibrinogênio;fibrinogenio|fib;Plasma citrato;Coagulação
 DDIM;D-dímero;d dimero|ddimero|d-dimero;Plasma citrato;Coagulação
 ABORH;Tipagem sanguínea ABO/Rh;tipagem sanguinea|tipo sanguineo|abo rh|abo/rh|grupo sanguineo|gs fator rh|gs rh;Sangue EDTA;Imunohematologia
 COOMBSI;Coombs indireto;coombs indireto|pai|pesquisa de anticorpos irregulares;Soro;Imunohematologia
-GLI;Glicose;glicose|glicemia|glicemia de jejum|gli|glic|gj|glicose jejum;Plasma fluoreto;Bioquímica
+GLIC;Glicose;glicose|glicemia|glicemia de jejum|gli|glic|gj|glicose jejum;SORO;Bioquímica
 HBA1C;Hemoglobina glicada (HbA1c);hemoglobina glicada|hba1c|a1c|hb glicada|glicohemoglobina;Sangue EDTA;Bioquímica
 TOTG;Teste oral de tolerância à glicose;totg|curva glicemica|curva de glicose|gtt|tolerancia a glicose;Plasma fluoreto;Bioquímica
 INS;Insulina;insulina|insulina basal|insulina jejum;Soro;Hormônios
-UREIA;Ureia;ureia|ur|u|bun;Soro;Bioquímica
-CREA;Creatinina;creatinina|cr|creat|crea;Soro;Bioquímica
+UREI;Ureia;ureia|ur|u|bun;SORO;Bioquímica
+CREA;Creatinina;creatinina|cr|creat|crea;SORO;Bioquímica
 AURICO;Ácido úrico;acido urico|ac urico|au|ac. urico;Soro;Bioquímica
 CT;Colesterol total;colesterol total|colesterol|ct|col total;Soro;Bioquímica
 HDL;Colesterol HDL;hdl|hdl colesterol|colesterol hdl|hdl-c;Soro;Bioquímica
@@ -60,11 +60,11 @@ ESTR;Estradiol;estradiol|e2;Soro;Hormônios
 PROG;Progesterona;progesterona;Soro;Hormônios
 TESTO;Testosterona total;testosterona|testosterona total;Soro;Hormônios
 CORT;Cortisol;cortisol|cortisol basal;Soro;Hormônios
-HIV;Anti-HIV 1 e 2;hiv|anti hiv|anti-hiv|hiv 1 e 2|sorologia hiv;Soro;Imunologia
+HIV;Anti-HIV 1 e 2;hiv|anti hiv|anti-hiv|hiv 1 e 2|sorologia hiv;SORO REFRIGERADO;Imunologia
 VDRL;VDRL;vdrl|sifilis|lues;Soro;Imunologia
-HBSAG;HBsAg (Hepatite B);hbsag|hepatite b|antigeno hbs;Soro;Imunologia
-ANTIHBS;Anti-HBs;anti hbs|anti-hbs|antihbs;Soro;Imunologia
-ANTIHCV;Anti-HCV (Hepatite C);anti hcv|anti-hcv|hcv|hepatite c;Soro;Imunologia
+AGHBS;HBsAg (Hepatite B);hbsag|hepatite b|antigeno hbs;SORO;Imunologia
+HBS;Anti-HBs;anti hbs|anti-hbs|antihbs;SORO;Imunologia
+HCV;Anti-HCV (Hepatite C);anti hcv|anti-hcv|hcv|hepatite c|antihcv;SORO REFRIGERADO;Imunologia
 TOXO;Toxoplasmose IgG e IgM;toxoplasmose|toxo igg igm|toxoplasmose igg/igm;Soro;Imunologia
 RUB;Rubéola IgG e IgM;rubeola|rubeola igg igm;Soro;Imunologia
 CMV;Citomegalovírus IgG e IgM;citomegalovirus|cmv|cmv igg igm;Soro;Imunologia

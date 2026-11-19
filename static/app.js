@@ -34,7 +34,8 @@ async function carregarStats() {
 
 // ------------------------------------------------------------------ upload
 async function init() {
-  const [ext, cat] = await Promise.all([api("/api/extratores"), api("/api/catalogo")]);
+  const [ext, cat, conv] = await Promise.all([api("/api/extratores"), api("/api/catalogo"), api("/api/convenios")]);
+  $("#dl-convenios").innerHTML = conv.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nome)}</option>`).join("");
   catalogo = cat;
   $("#dl-catalogo").innerHTML = cat.map((c) => `<option value="${esc(c.codigo)}">${esc(c.nome)}</option>`).join("");
   const sel = $("#sel-extrator");
@@ -209,13 +210,27 @@ $("#btn-salvar").addEventListener("click", async () => {
   }
 });
 
+$("#btn-xml").addEventListener("click", async () => {
+  try {
+    if (atual.status !== "os_gerada") await salvar();
+    const xml = await (await fetch(`/api/leituras/${atual.id}/xml-shift`)).text();
+    $("#rev-msg").innerHTML = `<div class="alerta">XML que será enviado ao Shift (conferência; nada foi enviado).</div>
+      <pre class="xml">${esc(xml)}</pre>`;
+  } catch (err) {
+    $("#rev-msg").innerHTML = `<div class="alerta erro">${esc(err.message)}</div>`;
+  }
+});
+
 $("#btn-os").addEventListener("click", async () => {
   try {
     await salvar();
     const r = await api(`/api/leituras/${atual.id}/os`, { method: "POST" });
     abrirRevisao(await api(`/api/leituras/${atual.id}`));
-    $("#rev-msg").innerHTML = `<div class="alerta ok">O.S. <strong>${esc(r.os_numero)}</strong> gerada.</div>
-      <details><summary>Payload enviado ao LIS</summary><pre>${esc(JSON.stringify(r.payload, null, 2))}</pre></details>`;
+    const res = r.resultado || {};
+    const amostras = (res.exames || []).flatMap((e) => (e.amostras || []).map((a) => `${esc(e.codigo)}: ${esc(a.codigo_barra)}${a.etiqueta ? " · " + esc(a.etiqueta) : ""}`));
+    $("#rev-msg").innerHTML = `<div class="alerta ok">O.S. <strong>${esc(r.os_numero)}</strong> ${res.simulado ? "gerada em modo arquivo (nada foi enviado ao LIS)" : "criada no LIS"}.
+        ${amostras.length ? `<br>Amostras: ${amostras.join("; ")}` : ""}</div>
+      <details><summary>Dados enviados</summary><pre>${esc(JSON.stringify(r.payload, null, 2))}</pre></details>`;
   } catch (err) {
     $("#rev-msg").innerHTML = `<div class="alerta erro" style="white-space:pre-line">${esc(err.message)}</div>`;
   }

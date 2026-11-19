@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import config, db
 from .catalogo import Catalogo
+from .convenios import Convenios
 from .extractors import ErroExtracao, criar_extratores
 from .lis import ErroLIS, montar_payload, obter_adaptador, validar_para_os
 from .models import Requisicao
@@ -22,6 +23,7 @@ TAMANHO_MAXIMO = 20 * 1024 * 1024
 
 app = FastAPI(title="CheckExame", version="0.1.0")
 catalogo = Catalogo.carregar()
+convenios = Convenios.carregar()
 extratores = criar_extratores(catalogo)
 db.init()
 
@@ -51,6 +53,8 @@ def _mapear(req: Requisicao) -> Requisicao:
     aprendidos = db.sinonimos_aprendidos()
     for ex in req.exames:
         catalogo.mapear(ex, aprendidos)
+    if not req.convenio.codigo:
+        req.convenio.codigo = convenios.mapear(req.convenio.nome)
     return req
 
 
@@ -74,6 +78,11 @@ def listar_extratores():
 @app.get("/api/catalogo")
 def listar_catalogo():
     return catalogo.listar()
+
+
+@app.get("/api/convenios")
+def listar_convenios():
+    return convenios.listar()
 
 
 @app.get("/api/catalogo/sugerir")
@@ -168,16 +177,41 @@ def gerar_os(leitura_id: int):
     if leitura["status"] == "os_gerada":
         raise HTTPException(409, f"O.S. {leitura['os_numero']} já gerada.")
     req = Requisicao.model_validate(leitura["dados"])
-    pendencias = validar_para_os(req)
+    payload = _payload(req, leitura)
+    try:
+        adaptador = obter_adaptador()
+    except ErroLIS as e:
+        raise HTTPException(500, str(e)) from e
+    pendencias = validar_para_os(req) + adaptador.pendencias(payload)
     if pendencias:
         raise HTTPException(422, {"pendencias": pendencias})
-    payload = montar_payload(req, leitura_id)
     try:
-        resultado = obter_adaptador().criar_os(payload)
+        resultado = adaptador.criar_os(payload)
     except ErroLIS as e:
         raise HTTPException(502, str(e)) from e
     db.atualizar_leitura(leitura_id, status="os_gerada", os_numero=resultado["os_numero"])
-    return {"os_numero": resultado["os_numero"], "payload": payload}
+    return {"os_numero": resultado["os_numero"], "payload": payload, "resultado": resultado, "adaptador": adaptador.nome}
+
+
+def _payload(req: Requisicao, leitura: dict) -> dict:
+    materiais = {c: i.material for c, i in catalogo.itens.items()}
+    return montar_payload(req, leitura["id"], leitura["criado_em"], materiais)
+
+
+@app.get("/api/leituras/{leitura_id}/xml-shift")
+def xml_shift(leitura_id: int):
+    """Envelope SOAP que seria enviado ao Shift, para conferência (não envia nada)."""
+    from .lis.shift import gerar_envelope, gerar_pedido_xml, pendencias_shift
+
+    leitura = db.obter_leitura(leitura_id)
+    if not leitura or not leitura.get("dados"):
+        raise HTTPException(404, "Leitura não encontrada.")
+    payload = _payload(Requisicao.model_validate(leitura["dados"]), leitura)
+    envelope, acao = gerar_envelope(gerar_pedido_xml(payload))
+    avisos = pendencias_shift(payload)
+    cab = "".join(f"<!-- Pendência: {a.replace('--', '-')} -->\n" for a in avisos)
+    declaracao, corpo = envelope.split("\n", 1)
+    return Response(f"{declaracao}\n{cab}<!-- SOAPAction: {acao} -->\n{corpo}", media_type="application/xml")
 
 
 @app.get("/api/estatisticas")

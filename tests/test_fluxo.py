@@ -21,8 +21,8 @@ def test_normalizar():
 
 
 def test_mapeamento_exato_e_sigla():
-    for texto, codigo in [("Hemograma completo", "HMG"), ("TGO", "TGO"), ("Urina tipo 1", "EAS"),
-                          ("glicemia de jejum", "GLI"), ("Vit D", "VITD"), ("K", "K")]:
+    for texto, codigo in [("Hemograma completo", "HEMO"), ("TGO", "TGO"), ("Urina tipo 1", "EAS"),
+                          ("glicemia de jejum", "GLIC"), ("Vit D", "VITD"), ("K", "K")]:
         ex = cat.mapear(Exame(texto_original=texto))
         assert ex.codigo_lis == codigo, texto
         assert ex.status_mapeamento == "ok"
@@ -30,7 +30,7 @@ def test_mapeamento_exato_e_sigla():
 
 def test_mapeamento_aproximado():
     ex = cat.mapear(Exame(texto_original="hemogrma complto"))
-    assert ex.codigo_lis == "HMG"
+    assert ex.codigo_lis == "HEMO"
     ex = cat.mapear(Exame(texto_original="xyzabc qwerty"))
     assert ex.status_mapeamento == "nao_encontrado"
 

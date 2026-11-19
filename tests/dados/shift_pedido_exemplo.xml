@@ -1,0 +1,201 @@
+<?xml version="1.0" ?>
+<!-- type: shift.msg.ImportaPedidoSincRequest  id: 71408356 -->
+<ImportaPedidoSincRequest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:s="http://www.w3.org/2001/XMLSchema">
+<IdIntegracao>18</IdIntegracao>
+<Usuario>teste</Usuario>
+<Senha></Senha>
+<Pedidos><![CDATA[<pedidoLab><pedido>
+	<codigo>0119674</codigo>
+	<ordemServico>0119674</ordemServico>
+	<observacao/>
+</pedido>
+<paciente>
+	<codigo>93802</codigo>
+	<nome>testeshift</nome>
+	<sexo>F</sexo>
+	<dtNascimento>1984-07-21</dtNascimento>
+	<altura/>
+	<peso/>
+	<dum/>
+	<rg></rg>
+	<cpf></cpf>
+	<cns/>
+	<email/>
+	<telefone></telefone>
+	<celular/>
+	<medicamento>NÃO.</medicamento>
+	<anamnese/>
+</paciente>
+<exames>
+	<exame>
+		<codigo>HEMO</codigo>
+		<descricao>HEMOGRAMA COMPLETO</descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>Sangue Total (HEMO)</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+	<exame>
+		<codigo>GLIC</codigo>
+		<descricao>DOSAGEM DE GLICOSE </descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>SORO</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+	<exame>
+		<codigo>UREI</codigo>
+		<descricao>DOSAGEM DE UREIA</descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>SORO</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+	<exame>
+		<codigo>CREA</codigo>
+		<descricao>DOSAGEM DE CREATININA</descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>SORO</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+	<exame>
+		<codigo>HIV</codigo>
+		<descricao>SOROLOGIA HIV 1 E 2 - ANTICORPOS</descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>SORO REFRIGERADO</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+	<exame>
+		<codigo>AGHBS</codigo>
+		<descricao>ANTIGENO DO VIRUS DA HEPATITE B (HBSAG)</descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>SORO</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+	<exame>
+		<codigo>HBS</codigo>
+		<descricao>ANTICORPOS DA HEPATITE B (ANTI-HBS)</descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>SORO</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+	<exame>
+		<codigo>HCV</codigo>
+		<descricao>HEPATITE C - ANTI HCV </descricao>
+		<amostras>
+			<amostra>
+				<codigoBarra/>
+				<recipiente/>
+			</amostra>
+		</amostras>
+		<descMaterial>SORO REFRIGERADO</descMaterial>
+		<observacao/>
+		<medicos>
+			<medico>
+				<nome></nome>
+				<crm></crm>
+				<conselho></conselho>
+				<uf/>
+			</medico>
+		</medicos>
+		<urgente>0</urgente>
+	</exame>
+</exames>
+</pedidoLab>
+]]></Pedidos>
+</ImportaPedidoSincRequest>

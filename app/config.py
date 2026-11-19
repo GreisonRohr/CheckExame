@@ -28,3 +28,21 @@ for d in (DATA_DIR, UPLOAD_DIR, OS_DIR):
 # Acesso: se CHECKEXAME_SENHA estiver definida, o site pede usuário e senha (HTTP Basic)
 USUARIO = os.getenv("CHECKEXAME_USUARIO", "checkexame")
 SENHA = os.getenv("CHECKEXAME_SENHA", "")
+
+# Integração Shift (web service de recepção de pedidos)
+#   SHIFT_URL vazio = modo arquivo: o XML é gerado em data/os_geradas/ sem envio
+SHIFT_URL = os.getenv("CHECKEXAME_SHIFT_URL", "")
+#   "integracao": ImportaPedidoSinc(IdIntegracao, Usuario, Senha, Pedidos) — formato do XML de exemplo
+#   "hospital":   RecebePedido(idHospital, pedidoLab) — formato do documento v1.3
+SHIFT_MODELO = os.getenv("CHECKEXAME_SHIFT_MODELO", "integracao")
+SHIFT_ID_INTEGRACAO = os.getenv("CHECKEXAME_SHIFT_ID_INTEGRACAO", "")  # IdIntegracao / idHospital
+SHIFT_USUARIO = os.getenv("CHECKEXAME_SHIFT_USUARIO", "")
+SHIFT_SENHA = os.getenv("CHECKEXAME_SHIFT_SENHA", "")
+SHIFT_NAMESPACE = os.getenv("CHECKEXAME_SHIFT_NAMESPACE", "http://tempuri.org")
+SHIFT_SOAP_ACTION = os.getenv("CHECKEXAME_SHIFT_SOAP_ACTION", "")
+SHIFT_METODO = os.getenv("CHECKEXAME_SHIFT_METODO", "")  # vazio = ImportaPedidoSinc ou RecebePedido conforme o modelo
+SHIFT_POSTO = os.getenv("CHECKEXAME_SHIFT_POSTO", "")  # código do posto/setor de coleta
+SHIFT_CONVENIO_PADRAO = os.getenv("CHECKEXAME_SHIFT_CONVENIO_PADRAO", "")  # usado quando o convênio não é reconhecido
+SHIFT_PREFIXO = os.getenv("CHECKEXAME_SHIFT_PREFIXO", "CKX")  # prefixo do código do pedido gerado
+SHIFT_TIMEOUT = float(os.getenv("CHECKEXAME_SHIFT_TIMEOUT", "60"))
+CONVENIOS_PATH = Path(os.getenv("CHECKEXAME_CONVENIOS", BASE_DIR / "data" / "convenios.csv"))

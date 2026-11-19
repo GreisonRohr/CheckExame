@@ -111,6 +111,39 @@ melhor o mapeamento. Os sinônimos aprendidos na revisão ficam no banco
 
 Documentação interativa: http://localhost:8000/docs
 
+## Integração com o Shift
+
+O adaptador `shift` (`app/lis/shift.py`) segue o documento *Integra_RecebePedido_WSHIS
+v1.3* e o XML de exemplo `ImportaPedidoSincRequest` (em `tests/dados/`):
+
+1. Monta o XML `pedidoLab` (pedido, paciente, exames, médico em cada exame, dados
+   cadastrais PLANO / CARTEIRA / DATAVALIDADECARTEIRA / GUIA, urgente 0/1).
+2. Envia por SOAP, dentro de CDATA, em um dos dois modelos:
+   - `integracao`: `ImportaPedidoSinc(IdIntegracao, Usuario, Senha, Pedidos)` (como no XML de exemplo);
+   - `hospital`: `RecebePedido(idHospital, pedidoLab)` (como no documento v1.3).
+3. Lê o `retornoLab`: número da O.S., códigos de barras e etiquetas das amostras, ou a
+   descrição do erro.
+
+Ative com `CHECKEXAME_LIS_ADAPTER=shift`. Sem `CHECKEXAME_SHIFT_URL`, funciona em
+**modo arquivo**: gera o envelope em `data/os_geradas/<pedido>.xml` sem enviar nada,
+para conferir ou testar no SoapUI. Na tela de revisão, o botão **Ver XML do Shift**
+mostra o envelope com as pendências.
+
+Regras aplicadas:
+- **Código do pedido / O.S.**: `CKX` + data da leitura + número da leitura (único e estável).
+- **Código do paciente**: o informado; senão o CPF; senão `CKXP<leitura>`.
+- **Convênio**: o nome lido é convertido para código pela tabela `data/convenios.csv`
+  (exemplo; trocar pela tabela do Shift) ou usa `CHECKEXAME_SHIFT_CONVENIO_PADRAO`.
+- **Exames**: código e material vêm do catálogo. No catálogo de exemplo, HEMO, GLIC, UREI,
+  CREA, HIV, AGHBS, HBS e HCV já usam os códigos do XML de exemplo da Shift; os demais
+  são fictícios.
+- **Obrigatórios do Shift**: sexo M/F, data de nascimento válida, convênio, posto.
+
+Variáveis: ver `.env.example` (seção Shift).
+
+A integração de **resultados** (`ExportaResultados`, documento *Integra_EnvioResultados*)
+ainda não foi implementada; ela permite buscar no Shift os resultados das O.S. criadas.
+
 ## Próximos passos (integração com o LIS)
 
 1. **Catálogo real**: importar os exames do LIS (código, nome, material) e manter a

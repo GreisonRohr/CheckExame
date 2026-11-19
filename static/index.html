@@ -81,6 +81,7 @@
           <legend>Convênio</legend>
           <div class="grid">
             <label>Convênio <input data-c="convenio.nome"></label>
+            <label>Cód. convênio no LIS <input data-c="convenio.codigo" list="dl-convenios"></label>
             <label>Plano <input data-c="convenio.plano"></label>
             <label>Carteirinha <input data-c="convenio.carteirinha"></label>
             <label>Validade <input data-c="convenio.validade_carteirinha"></label>
@@ -109,6 +110,7 @@
             <tbody></tbody>
           </table>
           <datalist id="dl-catalogo"></datalist>
+          <datalist id="dl-convenios"></datalist>
         </fieldset>
 
         <fieldset>
@@ -117,6 +119,7 @@
         </fieldset>
 
         <div class="acoes">
+          <button type="button" id="btn-xml">Ver XML do Shift</button>
           <button type="button" id="btn-salvar">Salvar revisão</button>
           <button type="button" id="btn-os" class="primario">Gerar O.S. no LIS</button>
         </div>
